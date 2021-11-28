@@ -1,9 +1,9 @@
 [package]
-name = "collectxyz-nft-contract"
+name = "internnft-nft-contract"
 version = "0.2.2"
-authors = ["0xja <0xja@protonmail.com>"]
+authors = [""]
 edition = "2018"
-description = "The NFT smart contract powering xyz on Terra"
+description = ""
 license = "Apache-2.0"
 
 exclude = [
@@ -37,7 +37,7 @@ schemars = "0.8.3"
 sha2 = { version = "0.9.8" }
 serde = { version = "1.0.127", default-features = false, features = ["derive"] }
 serde_json = "1.0.67"
-collectxyz = { path = "../../packages/collectxyz", version = "0.2.0" }
+internnft = { path = "../../packages/internnft", version = "0.2.0" }
 
 [dev-dependencies]
 cosmwasm-schema = { version = "0.16.0" }

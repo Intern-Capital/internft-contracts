@@ -1,14 +1,14 @@
 use rsa::pkcs8::ToPublicKey;
 
-use collectxyz::nft::{
-    full_token_id, numeric_token_id, Config, Coordinates, Cw721AllNftInfoResponse,
-    Cw721NftInfoResponse, MoveParamsResponse, QueryMsg, XyzExtension, XyzTokenInfo,
-    XyzTokensResponse,
-};
 use cosmwasm_std::{to_binary, Binary, BlockInfo, Deps, Empty, Env, Order, StdError, StdResult};
 use cw721::{NumTokensResponse, OwnerOfResponse, TokensResponse};
 use cw721_base::{msg::QueryMsg as Cw721QueryMsg, Cw721Contract};
 use cw_storage_plus::Bound;
+use internnft::nft::{
+    full_token_id, numeric_token_id, Config, Coordinates, Cw721AllNftInfoResponse,
+    Cw721NftInfoResponse, MoveParamsResponse, QueryMsg, XyzExtension, XyzTokenInfo,
+    XyzTokensResponse,
+};
 
 use crate::state::{load_captcha_public_key, tokens, CONFIG};
 
@@ -259,9 +259,9 @@ fn humanize_approval(approval: &cw721_base::state::Approval) -> cw721::Approval 
 mod test {
     use super::*;
 
-    use collectxyz::nft::{Cw721AllNftInfoResponse, Cw721Metadata, Cw721Trait};
     use cosmwasm_std::testing::{mock_dependencies, mock_env};
     use cosmwasm_std::{from_binary, Addr, DepsMut, Timestamp};
+    use internnft::nft::{Cw721AllNftInfoResponse, Cw721Metadata, Cw721Trait};
 
     const ADDR1: &str = "addr1";
     const ADDR2: &str = "addr2";

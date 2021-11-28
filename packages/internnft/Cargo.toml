@@ -1,11 +1,11 @@
 [package]
-name = "collectxyz"
+name = "internnft"
 version = "0.2.2"
-authors = ["0xja <0xja@protonmail.com>"]
+authors = [""]
 edition = "2018"
-description = "Common data types and helpers for interacting with xyz smart contracts"
+description = "Common data types and helpers for interacting with internnft smart contracts"
 license = "Apache-2.0"
-repository = "https://github.com/collectxyz/collectxyz-nft-contract"
+repository = "https://github.com/photonized/internft-contracts"
 
 [features]
 # for more explicit tests, cargo test --features=backtraces

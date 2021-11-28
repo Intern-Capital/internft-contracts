@@ -1,14 +1,14 @@
-use collectxyz::nft::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 use cosmwasm_std::{
     entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult,
 };
 use cw2::{get_contract_version, set_contract_version};
+use internnft::nft::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 
 use crate::error::ContractError;
 use crate::execute as ExecHandler;
 use crate::query as QueryHandler;
 
-const CONTRACT_NAME: &str = "crates.io:collectxyz-nft-contract";
+const CONTRACT_NAME: &str = "crates.io:internnft-nft-contract";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[entry_point]

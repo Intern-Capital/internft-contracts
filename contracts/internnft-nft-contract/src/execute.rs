@@ -2,16 +2,16 @@ use rsa::{hash::Hash, padding::PaddingScheme, PublicKey};
 use serde_json;
 use sha2::{Digest, Sha256};
 
-use collectxyz::nft::{
-    base64_token_image, full_token_id, numeric_token_id, Config, Coordinates, ExecuteMsg,
-    InstantiateMsg, MigrateMsg, XyzExtension, XyzTokenInfo,
-};
 use cosmwasm_std::{
     Attribute, BankMsg, Binary, Coin, DepsMut, Empty, Env, MessageInfo, Order, Response, StdError,
     StdResult, Storage,
 };
 use cw721::{ContractInfoResponse, Cw721ReceiveMsg};
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, Cw721Contract};
+use internnft::nft::{
+    base64_token_image, full_token_id, numeric_token_id, Config, Coordinates, ExecuteMsg,
+    InstantiateMsg, MigrateMsg, XyzExtension, XyzTokenInfo,
+};
 
 use crate::error::ContractError;
 use crate::state::{load_captcha_public_key, save_captcha_public_key, tokens, CONFIG, OWNER};

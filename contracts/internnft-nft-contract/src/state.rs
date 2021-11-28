@@ -1,8 +1,8 @@
 use rsa::{pkcs8::FromPublicKey, RsaPublicKey};
 
-use collectxyz::nft::{Config, XyzTokenInfo};
 use cosmwasm_std::{Addr, StdError, StdResult, Storage};
 use cw_storage_plus::{Index, IndexList, IndexedMap, Item, MultiIndex, UniqueIndex};
+use internnft::nft::{Config, XyzTokenInfo};
 
 pub const CONFIG: Item<Config> = Item::new("config");
 

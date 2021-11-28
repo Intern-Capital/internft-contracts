@@ -1,9 +1,9 @@
 #![cfg(test)]
 use std::str;
 
-use collectxyz::nft::{Config, Coordinates, ExecuteMsg, InstantiateMsg, QueryMsg, XyzExtension};
 use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
 use cosmwasm_std::{BankMsg, Binary, Coin, DepsMut, StdError, Uint128};
+use internnft::nft::{Config, Coordinates, ExecuteMsg, InstantiateMsg, QueryMsg, XyzExtension};
 use serde_json::json;
 
 use crate::contract::{execute, instantiate, query};
@@ -681,7 +681,7 @@ fn move_token() {
     .unwrap_err();
     assert_eq!(
         err,
-        ContractError::Std(StdError::not_found("collectxyz::nft::XyzTokenInfo"))
+        ContractError::Std(StdError::not_found("internnft::nft::XyzTokenInfo"))
     );
 
     // can't move a token that isn't yours
