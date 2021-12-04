@@ -5,52 +5,30 @@ use cw721::{NumTokensResponse, OwnerOfResponse, TokensResponse};
 use cw721_base::{msg::QueryMsg as Cw721QueryMsg, Cw721Contract};
 use cw_storage_plus::Bound;
 use internnft::nft::{
-    full_token_id, numeric_token_id, Config, Coordinates, Cw721AllNftInfoResponse,
-    Cw721NftInfoResponse, MoveParamsResponse, QueryMsg, XyzExtension, XyzTokenInfo,
-    XyzTokensResponse,
+    full_token_id, numeric_token_id, Config, Cw721AllNftInfoResponse, Cw721NftInfoResponse,
+    InternExtension, InternTokenInfo, InternTokensResponse, QueryMsg,
 };
 
-use crate::state::{load_captcha_public_key, tokens, CONFIG};
+use crate::state::{tokens, CONFIG};
 
 pub fn query_config(deps: Deps) -> StdResult<Config> {
     CONFIG.load(deps.storage)
 }
 
-pub fn query_captcha_public_key(deps: Deps) -> StdResult<String> {
-    let public_key = load_captcha_public_key(deps.storage)?;
-
-    public_key
-        .to_public_key_pem()
-        .map_err(|_| StdError::generic_err("couldn't serialize public key"))
-}
-
-pub fn query_xyz_nft_info(deps: Deps, token_id: String) -> StdResult<XyzTokenInfo> {
+pub fn query_intern_nft_info(deps: Deps, token_id: String) -> StdResult<InternTokenInfo> {
     let token = tokens().load(deps.storage, &token_id)?;
     Ok(token)
-}
-
-pub fn query_xyz_nft_info_by_coords(deps: Deps, coords: Coordinates) -> StdResult<XyzTokenInfo> {
-    let token = tokens()
-        .idx
-        .coordinates
-        .item(deps.storage, coords.to_bytes())?
-        .map(|(_, item)| item);
-    if let Some(token) = token {
-        Ok(token)
-    } else {
-        Err(StdError::not_found("xyz_token_info"))
-    }
 }
 
 const DEFAULT_LIMIT: u32 = 10;
 const MAX_LIMIT: u32 = 30;
 
-pub fn query_xyz_tokens(
+pub fn query_intern_tokens(
     deps: Deps,
     owner: String,
     start_after: Option<String>,
     limit: Option<u32>,
-) -> StdResult<XyzTokensResponse> {
+) -> StdResult<InternTokensResponse> {
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
     let start = start_after.map(Bound::exclusive);
 
@@ -63,14 +41,14 @@ pub fn query_xyz_tokens(
         .take(limit)
         .map(|item| item.map(|(_, token)| token))
         .collect();
-    Ok(XyzTokensResponse { tokens: tokens? })
+    Ok(InternTokensResponse { tokens: tokens? })
 }
 
-pub fn query_all_xyz_tokens(
+pub fn query_all_intern_tokens(
     deps: Deps,
     start_after: Option<String>,
     limit: Option<u32>,
-) -> StdResult<XyzTokensResponse> {
+) -> StdResult<InternTokensResponse> {
     let limit = limit.unwrap_or(DEFAULT_LIMIT).min(MAX_LIMIT) as usize;
     let start = start_after.map(Bound::exclusive);
 
@@ -79,7 +57,7 @@ pub fn query_all_xyz_tokens(
         .take(limit)
         .map(|item| item.map(|(_, token)| token))
         .collect();
-    Ok(XyzTokensResponse { tokens: tokens? })
+    Ok(InternTokensResponse { tokens: tokens? })
 }
 
 pub fn query_num_tokens_for_owner(deps: Deps, owner: String) -> StdResult<NumTokensResponse> {
@@ -93,26 +71,8 @@ pub fn query_num_tokens_for_owner(deps: Deps, owner: String) -> StdResult<NumTok
     Ok(NumTokensResponse { count })
 }
 
-pub fn query_move_params(
-    deps: Deps,
-    token_id: String,
-    coordinates: Coordinates,
-) -> StdResult<MoveParamsResponse> {
-    let config = CONFIG.load(deps.storage)?;
-    let token = tokens().load(deps.storage, &token_id)?;
-
-    config.check_bounds(coordinates)?;
-
-    let fee = config.get_move_fee(token.extension.coordinates, coordinates);
-    let duration_nanos = config.get_move_nanos(token.extension.coordinates, coordinates);
-    Ok(MoveParamsResponse {
-        fee,
-        duration_nanos,
-    })
-}
-
 pub fn cw721_base_query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
-    let cw721_contract = Cw721Contract::<XyzExtension, Empty>::default();
+    let cw721_contract = Cw721Contract::<InternExtension, Empty>::default();
 
     let cw721_msg: Cw721QueryMsg = msg.into();
     match cw721_msg {
@@ -238,7 +198,7 @@ pub fn owner_of(
 // adapted from: https://github.com/CosmWasm/cw-nfts/blob/5e1e72a3682f988d4504b94f2e203dd4a5a99ad9/contracts/cw721-base/src/query.rs#L211-L228
 fn humanize_approvals(
     block: &BlockInfo,
-    info: &XyzTokenInfo,
+    info: &InternTokenInfo,
     include_expired: bool,
 ) -> Vec<cw721::Approval> {
     info.approvals
@@ -266,27 +226,27 @@ mod test {
     const ADDR1: &str = "addr1";
     const ADDR2: &str = "addr2";
 
-    fn token_examples() -> Vec<XyzTokenInfo> {
+    fn token_examples() -> Vec<InternTokenInfo> {
         vec![
-            XyzTokenInfo {
+            InternTokenInfo {
                 owner: Addr::unchecked(ADDR1),
                 approvals: vec![],
-                name: "xyz #1".to_string(),
+                name: "intern #1".to_string(),
                 description: "".to_string(),
                 image: None,
-                extension: XyzExtension {
+                extension: InternExtension {
                     coordinates: Coordinates { x: 1, y: 1, z: 1 },
                     arrival: Timestamp::from_nanos(0),
                     prev_coordinates: None,
                 },
             },
-            XyzTokenInfo {
+            InternTokenInfo {
                 owner: Addr::unchecked(ADDR2),
                 approvals: vec![],
-                name: "xyz #2".to_string(),
+                name: "intern #2".to_string(),
                 description: "".to_string(),
                 image: None,
-                extension: XyzExtension {
+                extension: InternExtension {
                     coordinates: Coordinates { x: 2, y: 2, z: 2 },
                     arrival: Timestamp::from_nanos(0),
                     prev_coordinates: None,
@@ -321,7 +281,7 @@ mod test {
                 description: Some("".to_string()
                 ),
                 name: Some(
-                    "xyz #1".to_string()
+                    "intern #1".to_string()
                 ),
                 attributes: Some(
                     vec![
@@ -353,7 +313,7 @@ mod test {
             deps.as_ref(),
             mock_env(),
             QueryMsg::NftInfo {
-                token_id: "xyz #1".to_string(),
+                token_id: "intern #1".to_string(),
             },
         )
         .unwrap_err();
@@ -378,7 +338,7 @@ mod test {
             deps.as_ref(),
             mock_env(),
             QueryMsg::AllNftInfo {
-                token_id: "xyz #1".to_string(),
+                token_id: "intern #1".to_string(),
                 include_expired: None,
             },
         )
@@ -457,7 +417,7 @@ mod test {
             deps.as_ref(),
             mock_env(),
             QueryMsg::OwnerOf {
-                token_id: "xyz #1".to_string(),
+                token_id: "intern #1".to_string(),
                 include_expired: None,
             },
         )
