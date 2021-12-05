@@ -31,19 +31,9 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::Mint {
-            coordinates,
-            captcha_signature,
-        } => ExecHandler::execute_mint(deps, env, info, coordinates, captcha_signature),
-        ExecuteMsg::Move {
-            token_id,
-            coordinates,
-        } => ExecHandler::execute_move(deps, env, info, token_id, coordinates),
+        ExecuteMsg::Mint {} => ExecHandler::execute_mint(deps, env, info),
         ExecuteMsg::UpdateConfig { config } => {
             ExecHandler::execute_update_config(deps, info, config)
-        }
-        ExecuteMsg::UpdateCaptchaPublicKey { public_key } => {
-            ExecHandler::execute_update_captcha_public_key(deps, info, public_key)
         }
         ExecuteMsg::Withdraw { amount } => ExecHandler::execute_withdraw(deps, env, info, amount),
         _ => ExecHandler::cw721_base_execute(deps, env, info, msg),
@@ -54,37 +44,25 @@ pub fn execute(
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Config {} => to_binary(&QueryHandler::query_config(deps)?),
-        QueryMsg::CaptchaPublicKey {} => to_binary(&QueryHandler::query_captcha_public_key(deps)?),
-        QueryMsg::XyzNftInfo { token_id } => {
-            to_binary(&QueryHandler::query_xyz_nft_info(deps, token_id)?)
+        QueryMsg::InternNftInfo { token_id } => {
+            to_binary(&QueryHandler::query_intern_nft_info(deps, token_id)?)
         }
-        QueryMsg::XyzNftInfoByCoords { coordinates } => to_binary(
-            &QueryHandler::query_xyz_nft_info_by_coords(deps, coordinates)?,
-        ),
-        QueryMsg::XyzTokens {
+        QueryMsg::InternTokens {
             owner,
             start_after,
             limit,
-        } => to_binary(&QueryHandler::query_xyz_tokens(
+        } => to_binary(&QueryHandler::query_intern_tokens(
             deps,
             owner,
             start_after,
             limit,
         )?),
-        QueryMsg::AllXyzTokens { start_after, limit } => to_binary(
-            &QueryHandler::query_all_xyz_tokens(deps, start_after, limit)?,
+        QueryMsg::AllInternTokens { start_after, limit } => to_binary(
+            &QueryHandler::query_all_intern_tokens(deps, start_after, limit)?,
         ),
         QueryMsg::NumTokensForOwner { owner } => {
             to_binary(&QueryHandler::query_num_tokens_for_owner(deps, owner)?)
         }
-        QueryMsg::MoveParams {
-            token_id,
-            coordinates,
-        } => to_binary(&QueryHandler::query_move_params(
-            deps,
-            token_id,
-            coordinates,
-        )?),
         _ => QueryHandler::cw721_base_query(deps, env, msg),
     }
 }
