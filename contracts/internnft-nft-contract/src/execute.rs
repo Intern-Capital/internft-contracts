@@ -31,7 +31,11 @@ pub fn instantiate(deps: DepsMut, info: MessageInfo, msg: InstantiateMsg) -> Std
     Ok(Response::default())
 }
 
-pub fn execute_mint(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, ContractError> {
+pub fn execute_mint(
+    _deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+) -> Result<Response, ContractError> {
     //TODO: Write minting contract.
     Ok(Response::new()
         .add_attribute("action", "mint")
