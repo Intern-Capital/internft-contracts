@@ -42,6 +42,7 @@ pub fn execute_mint(
         .add_attribute("minter", info.sender))
 }
 
+#[allow(dead_code)]
 fn check_sufficient_funds(funds: Vec<Coin>, required: Coin) -> Result<(), ContractError> {
     if required.amount.u128() == 0 {
         return Ok(());
@@ -60,6 +61,7 @@ fn check_sufficient_funds(funds: Vec<Coin>, required: Coin) -> Result<(), Contra
     }
 }
 
+#[allow(dead_code)]
 fn check_wallet_limit(
     storage: &dyn Storage,
     owner: cosmwasm_std::Addr,
