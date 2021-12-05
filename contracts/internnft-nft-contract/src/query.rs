@@ -1,6 +1,4 @@
-use cosmwasm_std::{
-    to_binary, Binary, BlockInfo, Deps, Empty, Env, Order, StdError, StdResult, Uint128,
-};
+use cosmwasm_std::{to_binary, Binary, BlockInfo, Deps, Empty, Env, Order, StdError, StdResult};
 use cw721::{NumTokensResponse, OwnerOfResponse, TokensResponse};
 use cw721_base::{msg::QueryMsg as Cw721QueryMsg, Cw721Contract};
 use cw_storage_plus::Bound;
@@ -220,7 +218,7 @@ mod test {
     use super::*;
 
     use cosmwasm_std::testing::{mock_dependencies, mock_env};
-    use cosmwasm_std::{from_binary, Addr, DepsMut};
+    use cosmwasm_std::{from_binary, Addr, DepsMut, Uint128};
     use internnft::nft::{Cw721AllNftInfoResponse, Cw721Metadata, Cw721Trait};
 
     const ADDR1: &str = "addr1";

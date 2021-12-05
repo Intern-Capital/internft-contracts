@@ -1,12 +1,12 @@
 use cosmwasm_std::{
     Attribute, BankMsg, Binary, Coin, DepsMut, Empty, Env, MessageInfo, Order, Response, StdError,
-    StdResult, Storage, Uint128,
+    StdResult, Storage,
 };
 use cw721::{ContractInfoResponse, Cw721ReceiveMsg};
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, Cw721Contract};
 use internnft::nft::{
     full_token_id, numeric_token_id, Config, ExecuteMsg, InstantiateMsg, InternExtension,
-    InternTokenInfo, MigrateMsg,
+    MigrateMsg,
 };
 
 use crate::error::ContractError;
@@ -210,9 +210,10 @@ mod test {
     use super::*;
 
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::{to_binary, Addr};
+    use cosmwasm_std::{to_binary, Addr, Uint128};
     use cw721::{Cw721ReceiveMsg, Expiration};
     use cw721_base::state::Approval;
+    use internnft::nft::InternTokenInfo;
 
     const ADDR1: &str = "addr1";
     const ADDR2: &str = "addr2";
