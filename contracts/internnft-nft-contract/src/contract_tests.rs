@@ -44,6 +44,7 @@ fn setup_contract(
     assert_eq!(0, res.messages.len());
 }
 
+#[allow(dead_code)]
 fn as_json(binary: &Binary) -> serde_json::Value {
     let b64_binary = binary.to_base64();
     let decoded_bytes = base64::decode(&b64_binary).unwrap();
