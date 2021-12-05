@@ -1,6 +1,6 @@
-use rsa::pkcs8::ToPublicKey;
-
-use cosmwasm_std::{to_binary, Binary, BlockInfo, Deps, Empty, Env, Order, StdError, StdResult};
+use cosmwasm_std::{
+    to_binary, Binary, BlockInfo, Deps, Empty, Env, Order, StdError, StdResult, Uint128,
+};
 use cw721::{NumTokensResponse, OwnerOfResponse, TokensResponse};
 use cw721_base::{msg::QueryMsg as Cw721QueryMsg, Cw721Contract};
 use cw_storage_plus::Bound;
@@ -220,7 +220,7 @@ mod test {
     use super::*;
 
     use cosmwasm_std::testing::{mock_dependencies, mock_env};
-    use cosmwasm_std::{from_binary, Addr, DepsMut, Timestamp};
+    use cosmwasm_std::{from_binary, Addr, DepsMut};
     use internnft::nft::{Cw721AllNftInfoResponse, Cw721Metadata, Cw721Trait};
 
     const ADDR1: &str = "addr1";
@@ -235,9 +235,8 @@ mod test {
                 description: "".to_string(),
                 image: None,
                 extension: InternExtension {
-                    coordinates: Coordinates { x: 1, y: 1, z: 1 },
-                    arrival: Timestamp::from_nanos(0),
-                    prev_coordinates: None,
+                    experience: Uint128::new(10),
+                    gold: Uint128::new(100),
                 },
             },
             InternTokenInfo {
@@ -247,9 +246,8 @@ mod test {
                 description: "".to_string(),
                 image: None,
                 extension: InternExtension {
-                    coordinates: Coordinates { x: 2, y: 2, z: 2 },
-                    arrival: Timestamp::from_nanos(0),
-                    prev_coordinates: None,
+                    experience: Uint128::new(10),
+                    gold: Uint128::new(100),
                 },
             },
         ]
@@ -273,35 +271,23 @@ mod test {
         let expected = Cw721NftInfoResponse {
             token_uri: None,
             extension: Cw721Metadata {
-                image: Some(
-                    "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHByZXNlcnZlQXNwZWN0UmF0aW89InhNaW5ZTWluIG1lZXQiIHZpZXdCb3g9IjAgMCAyNDAgMjQwIj48ZyBjbGFzcz0iY29udGFpbmVyIj48cmVjdCBzdHlsZT0id2lkdGg6MjQwcHg7aGVpZ2h0OjI0MHB4O2ZpbGw6IzAwMDsiLz48dGV4dCB4PSIxMjAiIHk9IjEyMCIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgc3R5bGU9ImZpbGw6I2ZmZjtmb250LWZhbWlseTpzZXJpZjtmb250LXNpemU6MTZweDt0ZXh0LWFsaWduOmNlbnRlcjsiPlsxLCAxLCAxXTwvdGV4dD48L2c+PC9zdmc+".to_string(),
-                ),
+                image: None,
                 image_data: None,
                 external_url: None,
-                description: Some("".to_string()
-                ),
-                name: Some(
-                    "intern #1".to_string()
-                ),
-                attributes: Some(
-                    vec![
-                        Cw721Trait {
-                            display_type: None,
-                            trait_type: "x".to_string(),
-                            value: "1".to_string(),
-                        },
-                        Cw721Trait {
-                            display_type: None,
-                            trait_type: "y".to_string(),
-                            value: "1".to_string(),
-                        },
-                        Cw721Trait {
-                            display_type: None,
-                            trait_type: "z".to_string(),
-                            value: "1".to_string(),
-                        },
-                    ],
-                ),
+                description: Some("".to_string()),
+                name: Some("intern #1".to_string()),
+                attributes: Some(vec![
+                    Cw721Trait {
+                        display_type: None,
+                        trait_type: "experience".to_string(),
+                        value: "10".to_string(),
+                    },
+                    Cw721Trait {
+                        display_type: None,
+                        trait_type: "gold".to_string(),
+                        value: "100".to_string(),
+                    },
+                ]),
                 background_color: None,
                 animation_url: None,
                 youtube_url: None,

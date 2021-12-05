@@ -1,8 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use std::convert::TryInto;
 
-use cosmwasm_std::{Addr, Binary, Coin, StdError, StdResult, Timestamp, Uint128};
+use cosmwasm_std::{Addr, Binary, Coin, StdError, StdResult, Uint128};
 use cw721::{Expiration, OwnerOfResponse};
 use cw721_base::msg::{ExecuteMsg as CW721ExecuteMsg, QueryMsg as CW721QueryMsg};
 use cw721_base::state::Approval;
@@ -64,8 +63,8 @@ pub struct Config {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, Copy)]
 pub struct InternExtension {
-    experience: Uint128,
-    currency: Uint128,
+    pub experience: Uint128,
+    pub gold: Uint128,
 }
 
 impl InternExtension {
@@ -78,8 +77,8 @@ impl InternExtension {
             },
             Cw721Trait {
                 display_type: None,
-                trait_type: "currency".to_string(),
-                value: self.currency.to_string(),
+                trait_type: "gold".to_string(),
+                value: self.gold.to_string(),
             },
         ]
     }
@@ -120,23 +119,22 @@ pub fn full_token_id(numeric_token_id: String) -> StdResult<String> {
     numeric_token_id
         .parse::<u64>()
         .map_err(|_| StdError::generic_err("expected numeric token identifier"))?;
-    Ok(format!("xyz #{}", numeric_token_id))
+    Ok(format!("intern #{}", numeric_token_id))
 }
 
 pub fn numeric_token_id(full_token_id: String) -> StdResult<String> {
-    if !full_token_id.starts_with("xyz #") {
+    if !full_token_id.starts_with("intern #") {
         return Err(StdError::generic_err(
-            "expected full token identifier, like 'xyz #123'",
+            "expected full token identifier, like 'intern #123'",
         ));
     }
-    Ok(full_token_id.trim_start_matches("xyz #").to_string())
+    Ok(full_token_id.trim_start_matches("intern #").to_string())
 }
 
 /// This overrides the ExecuteMsg enum defined in cw721-base
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 #[serde(rename_all = "snake_case")]
 pub struct InstantiateMsg {
-    pub captcha_public_key: String,
     pub config: Config,
 }
 
@@ -229,9 +227,6 @@ pub enum QueryMsg {
     /// Returns the current contract config
     /// Return type: Config
     Config {},
-    /// Returns the currently configured captcha public key
-    CaptchaPublicKey {},
-
     /// Returns all tokens owned by the given address, [] if unset.
     /// Return type: InternTokensResponse.
     InternTokens {
@@ -354,12 +349,6 @@ pub struct InternTokensResponse {
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
-pub struct MoveParamsResponse {
-    pub fee: Coin,
-    pub duration_nanos: u64,
-}
-
-#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 #[serde(rename_all = "snake_case")]
 pub struct MigrateMsg {}
 
@@ -377,7 +366,7 @@ mod tests {
             approvals: vec![],
             extension: InternExtension {
                 experience: Uint128::new(10),
-                currency: Uint128::new(100),
+                gold: Uint128::new(100),
             },
         };
 
@@ -397,7 +386,7 @@ mod tests {
                         },
                         Cw721Trait {
                             display_type: None,
-                            trait_type: "currency".to_string(),
+                            trait_type: "gold".to_string(),
                             value: "100".to_string(),
                         },
                     ]),

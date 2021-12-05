@@ -1,10 +1,6 @@
-use rsa::{hash::Hash, padding::PaddingScheme, PublicKey};
-use serde_json;
-use sha2::{Digest, Sha256};
-
 use cosmwasm_std::{
     Attribute, BankMsg, Binary, Coin, DepsMut, Empty, Env, MessageInfo, Order, Response, StdError,
-    StdResult, Storage,
+    StdResult, Storage, Uint128,
 };
 use cw721::{ContractInfoResponse, Cw721ReceiveMsg};
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, Cw721Contract};
@@ -14,7 +10,7 @@ use internnft::nft::{
 };
 
 use crate::error::ContractError;
-use crate::state::{load_captcha_public_key, save_captcha_public_key, tokens, CONFIG, OWNER};
+use crate::state::{tokens, CONFIG, OWNER};
 
 const INTERN: &str = "intern";
 
@@ -214,7 +210,7 @@ mod test {
     use super::*;
 
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::{to_binary, Addr, Timestamp};
+    use cosmwasm_std::{to_binary, Addr};
     use cw721::{Cw721ReceiveMsg, Expiration};
     use cw721_base::state::Approval;
 
@@ -226,25 +222,23 @@ mod test {
             InternTokenInfo {
                 owner: Addr::unchecked(ADDR1),
                 approvals: vec![],
-                name: "xyz #1".to_string(),
+                name: "intern #1".to_string(),
                 description: "".to_string(),
                 image: None,
                 extension: InternExtension {
-                    coordinates: Coordinates { x: 1, y: 1, z: 1 },
-                    arrival: Timestamp::from_nanos(0),
-                    prev_coordinates: None,
+                    experience: Uint128::new(10),
+                    gold: Uint128::new(100),
                 },
             },
             InternTokenInfo {
                 owner: Addr::unchecked(ADDR2),
                 approvals: vec![],
-                name: "xyz #2".to_string(),
+                name: "intern #2".to_string(),
                 description: "".to_string(),
                 image: None,
                 extension: InternExtension {
-                    coordinates: Coordinates { x: 2, y: 2, z: 2 },
-                    arrival: Timestamp::from_nanos(0),
-                    prev_coordinates: None,
+                    experience: Uint128::new(20),
+                    gold: Uint128::new(200),
                 },
             },
         ]
@@ -272,13 +266,13 @@ mod test {
             mock_info(ADDR1, &[]),
             ExecuteMsg::TransferNft {
                 recipient: ADDR2.to_string(),
-                token_id: "xyz #1".to_string(),
+                token_id: "intern #1".to_string(),
             },
         )
         .unwrap_err();
         assert_eq!(err, numeric_id_error());
 
-        // transfer xyz #1
+        // transfer intern #1
         let res = cw721_base_execute(
             deps.as_mut(),
             mock_env(),
@@ -297,8 +291,8 @@ mod test {
             .any(|attr| attr.key == "token_id" && attr.value == "1"));
 
         // check ownership was updated
-        let token = tokens().load(&deps.storage, "xyz #1").unwrap();
-        assert_eq!(token.name, "xyz #1");
+        let token = tokens().load(&deps.storage, "intern #1").unwrap();
+        assert_eq!(token.name, "intern #1");
         assert_eq!(token.owner.to_string(), ADDR2.to_string());
     }
 
@@ -314,7 +308,7 @@ mod test {
             mock_info(ADDR1, &[]),
             ExecuteMsg::Approve {
                 spender: ADDR2.to_string(),
-                token_id: "xyz #1".to_string(),
+                token_id: "intern #1".to_string(),
                 expires: None,
             },
         )
@@ -341,8 +335,8 @@ mod test {
             .any(|attr| attr.key == "token_id" && attr.value == "1"));
 
         // check approval was added
-        let token = tokens().load(&deps.storage, "xyz #1").unwrap();
-        assert_eq!(token.name, "xyz #1");
+        let token = tokens().load(&deps.storage, "intern #1").unwrap();
+        assert_eq!(token.name, "intern #1");
         assert_eq!(
             token.approvals,
             vec![Approval {
@@ -358,7 +352,7 @@ mod test {
             mock_info(ADDR1, &[]),
             ExecuteMsg::Revoke {
                 spender: ADDR2.to_string(),
-                token_id: "xyz #1".to_string(),
+                token_id: "intern #1".to_string(),
             },
         )
         .unwrap_err();
@@ -383,8 +377,8 @@ mod test {
             .any(|attr| attr.key == "token_id" && attr.value == "1"));
 
         // check approval was revoked
-        let token = tokens().load(&deps.storage, "xyz #1").unwrap();
-        assert_eq!(token.name, "xyz #1");
+        let token = tokens().load(&deps.storage, "intern #1").unwrap();
+        assert_eq!(token.name, "intern #1");
         assert_eq!(token.approvals, vec![]);
     }
 
@@ -404,7 +398,7 @@ mod test {
             mock_info(ADDR1, &[]),
             ExecuteMsg::SendNft {
                 contract: target.clone(),
-                token_id: "xyz #1".to_string(),
+                token_id: "intern #1".to_string(),
                 msg: msg.clone(),
             },
         )
