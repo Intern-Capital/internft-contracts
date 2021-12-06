@@ -1,11 +1,10 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Addr, from_binary};
+use cosmwasm_std::{
+    from_binary, to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult,
+};
 use cw2::set_contract_version;
 use cw721::Cw721ReceiveMsg;
-use cw721_base::Cw721Contract;
-use internnft::nft::Cw721NftInfoResponse;
-use internnft::nft::QueryMsg::NftInfo;
 
 use crate::error::ContractError;
 use crate::msg::{CountResponse, Cw721HookMsg, ExecuteMsg, InstantiateMsg, QueryMsg};
@@ -38,12 +37,12 @@ pub fn instantiate(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn execute(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-       ExecuteMsg::Receive(msg) => receive_cw721(deps, env, info, msg),
+        ExecuteMsg::Receive(msg) => receive_cw721(deps, env, info, msg),
     }
 }
 
@@ -54,23 +53,27 @@ pub fn receive_cw721(
     cw721_msg: Cw721ReceiveMsg,
 ) -> Result<Response, ContractError> {
     match from_binary(&cw721_msg.msg) {
-        Ok(Cw721HookMsg::StakeGold {}) => {
-            stake_gold(deps, env, info.sender, cw721_msg)
-        },
-        Ok(Cw721HookMsg::StakeExp {}) => {
-            stake_exp(deps, env, info.sender, cw721_msg)
-        },
+        Ok(Cw721HookMsg::StakeGold {}) => stake_gold(deps, env, info.sender, cw721_msg),
+        Ok(Cw721HookMsg::StakeExp {}) => stake_exp(deps, env, info.sender, cw721_msg),
         Err(_) => Err(ContractError::InvalidCw721ReceiveMsg {}),
     }
 }
 
-pub fn stake_exp(deps: DepsMut, env: Env, sender: Addr, msg: Cw721ReceiveMsg) -> Result<Response, ContractError> {
-    
-
+pub fn stake_exp(
+    _deps: DepsMut,
+    _env: Env,
+    _sender: Addr,
+    _msg: Cw721ReceiveMsg,
+) -> Result<Response, ContractError> {
     Ok(Response::new())
 }
 
-pub fn stake_gold(deps: DepsMut, env: Env, sender: Addr, msg: Cw721ReceiveMsg) -> Result<Response, ContractError> {
+pub fn stake_gold(
+    _deps: DepsMut,
+    _env: Env,
+    _sender: Addr,
+    _msg: Cw721ReceiveMsg,
+) -> Result<Response, ContractError> {
     Ok(Response::new())
 }
 

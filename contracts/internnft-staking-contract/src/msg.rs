@@ -10,7 +10,7 @@ pub struct InstantiateMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
-    Receive(Cw721ReceiveMsg)
+    Receive(Cw721ReceiveMsg),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -33,4 +33,3 @@ pub enum Cw721HookMsg {
 pub struct CountResponse {
     pub count: i32,
 }
-
