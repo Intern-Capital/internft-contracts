@@ -1,10 +1,14 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult};
+use cosmwasm_std::{to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Addr, from_binary};
 use cw2::set_contract_version;
+use cw721::Cw721ReceiveMsg;
+use cw721_base::Cw721Contract;
+use internnft::nft::Cw721NftInfoResponse;
+use internnft::nft::QueryMsg::NftInfo;
 
 use crate::error::ContractError;
-use crate::msg::{CountResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
+use crate::msg::{CountResponse, Cw721HookMsg, ExecuteMsg, InstantiateMsg, QueryMsg};
 use crate::state::{State, STATE};
 
 // version info for migration info
@@ -39,28 +43,35 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::Increment {} => try_increment(deps),
-        ExecuteMsg::Reset { count } => try_reset(deps, info, count),
+       ExecuteMsg::Receive(msg) => receive_cw721(deps, env, info, msg),
     }
 }
 
-pub fn try_increment(deps: DepsMut) -> Result<Response, ContractError> {
-    STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
-        state.count += 1;
-        Ok(state)
-    })?;
-
-    Ok(Response::new().add_attribute("method", "try_increment"))
+pub fn receive_cw721(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    cw721_msg: Cw721ReceiveMsg,
+) -> Result<Response, ContractError> {
+    match from_binary(&cw721_msg.msg) {
+        Ok(Cw721HookMsg::StakeGold {}) => {
+            stake_gold(deps, env, info.sender, cw721_msg)
+        },
+        Ok(Cw721HookMsg::StakeExp {}) => {
+            stake_exp(deps, env, info.sender, cw721_msg)
+        },
+        Err(_) => Err(ContractError::InvalidCw721ReceiveMsg {}),
+    }
 }
-pub fn try_reset(deps: DepsMut, info: MessageInfo, count: i32) -> Result<Response, ContractError> {
-    STATE.update(deps.storage, |mut state| -> Result<_, ContractError> {
-        if info.sender != state.owner {
-            return Err(ContractError::Unauthorized {});
-        }
-        state.count = count;
-        Ok(state)
-    })?;
-    Ok(Response::new().add_attribute("method", "reset"))
+
+pub fn stake_exp(deps: DepsMut, env: Env, sender: Addr, msg: Cw721ReceiveMsg) -> Result<Response, ContractError> {
+    
+
+    Ok(Response::new())
+}
+
+pub fn stake_gold(deps: DepsMut, env: Env, sender: Addr, msg: Cw721ReceiveMsg) -> Result<Response, ContractError> {
+    Ok(Response::new())
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

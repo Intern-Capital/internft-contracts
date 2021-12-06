@@ -1,3 +1,4 @@
+use cw721::Cw721ReceiveMsg;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -9,8 +10,7 @@ pub struct InstantiateMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
-    Increment {},
-    Reset { count: i32 },
+    Receive(Cw721ReceiveMsg)
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -20,8 +20,17 @@ pub enum QueryMsg {
     GetCount {},
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum Cw721HookMsg {
+    // GetCount returns the current count as a json-encoded number
+    StakeGold {},
+    StakeExp {},
+}
+
 // We define a custom struct for each query response
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct CountResponse {
     pub count: i32,
 }
+
