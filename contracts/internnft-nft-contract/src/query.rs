@@ -235,6 +235,7 @@ mod test {
                 extension: InternExtension {
                     experience: Uint128::new(10),
                     gold: Uint128::new(100),
+                    stamina: 100,
                 },
             },
             InternTokenInfo {
@@ -246,6 +247,7 @@ mod test {
                 extension: InternExtension {
                     experience: Uint128::new(10),
                     gold: Uint128::new(100),
+                    stamina: 100,
                 },
             },
         ]
@@ -283,6 +285,11 @@ mod test {
                     Cw721Trait {
                         display_type: None,
                         trait_type: "gold".to_string(),
+                        value: "100".to_string(),
+                    },
+                    Cw721Trait {
+                        display_type: None,
+                        trait_type: "stamina".to_string(),
                         value: "100".to_string(),
                     },
                 ]),
