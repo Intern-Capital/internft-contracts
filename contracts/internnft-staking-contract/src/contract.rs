@@ -55,7 +55,7 @@ pub fn receive_cw721(
 
 pub fn stake_exp(
     _deps: DepsMut,
-    _env: Env,
+    env: Env,
     _sender: Addr,
     _msg: Cw721ReceiveMsg,
 ) -> Result<Response, ContractError> {
