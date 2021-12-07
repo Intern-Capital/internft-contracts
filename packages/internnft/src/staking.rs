@@ -11,6 +11,10 @@ pub struct Config {
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 #[serde(rename_all = "snake_case")]
+pub enum InstantiateMsg {}
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+#[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
     /// Allows this contract to be on the receiving end of a SendNft{contract, token_id, msg} call
     /// to the nft contract. The same thing as sending CW721 tokens to a contract.
@@ -22,8 +26,8 @@ pub enum ExecuteMsg {
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 #[serde(rename_all = "snake_case")]
 pub enum Cw721HookMsg {
-    /// Just an example for now.
-    StakeNft {},
+    StakeGold {},
+    StakeExp {},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
