@@ -4,7 +4,6 @@ use std::fs::create_dir_all;
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 use internnft::staking::{Config, Cw721HookMsg, ExecuteMsg, InstantiateMsg, QueryMsg};
 
-
 fn main() {
     let mut out_dir = current_dir().unwrap();
     out_dir.push("staking-schema");
@@ -16,5 +15,4 @@ fn main() {
     export_schema(&schema_for!(ExecuteMsg), &out_dir);
     export_schema(&schema_for!(QueryMsg), &out_dir);
     export_schema(&schema_for!(Cw721HookMsg), &out_dir);
-
 }
