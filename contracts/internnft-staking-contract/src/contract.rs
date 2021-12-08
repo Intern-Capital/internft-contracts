@@ -8,6 +8,7 @@ use cw721::Cw721ReceiveMsg;
 use internnft::staking::{Cw721HookMsg, ExecuteMsg, InstantiateMsg, QueryMsg};
 
 use crate::error::ContractError;
+use crate::state::get_staking_info;
 
 // version info for migration info
 const CONTRACT_NAME: &str = "crates.io:internnft-staking-contract";
@@ -63,11 +64,19 @@ pub fn stake_exp(
 }
 
 pub fn stake_gold(
-    _deps: DepsMut,
+    deps: DepsMut,
     _env: Env,
-    _sender: Addr,
-    _msg: Cw721ReceiveMsg,
+    sender: Addr,
+    msg: Cw721ReceiveMsg,
 ) -> Result<Response, ContractError> {
+    let staked_tokens = get_staking_info(&deps, sender).unwrap();
+
+    if staked_tokens.iter().any(|&id| id.token_id==msg.token_id ) {
+        Err(ContractError::TokenAlreadyStaked)
+    }
+
+
+
     Ok(Response::new())
 }
 
