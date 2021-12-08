@@ -9,4 +9,4 @@ pub struct StakingInfo {
     pub staking_type: String,
 }
 
-pub const STAKERS: Map<Addr, StakingInfo> = Map::new("stakers");
+pub const STAKERS: Map<Addr, Vec<StakingInfo>> = Map::new("stakers");
