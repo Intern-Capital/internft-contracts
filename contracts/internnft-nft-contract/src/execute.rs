@@ -235,6 +235,7 @@ mod test {
                 extension: InternExtension {
                     experience: Uint128::new(10),
                     gold: Uint128::new(100),
+                    stamina: 0,
                 },
             },
             InternTokenInfo {
@@ -246,6 +247,7 @@ mod test {
                 extension: InternExtension {
                     experience: Uint128::new(20),
                     gold: Uint128::new(200),
+                    stamina: 0,
                 },
             },
         ]

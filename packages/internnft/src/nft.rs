@@ -65,6 +65,7 @@ pub struct Config {
 pub struct InternExtension {
     pub experience: Uint128,
     pub gold: Uint128,
+    pub stamina: u8,
 }
 
 impl InternExtension {
@@ -79,6 +80,11 @@ impl InternExtension {
                 display_type: None,
                 trait_type: "gold".to_string(),
                 value: self.gold.to_string(),
+            },
+            Cw721Trait {
+                display_type: None,
+                trait_type: "stamina".to_string(),
+                value: self.stamina.to_string(),
             },
         ]
     }
@@ -367,6 +373,7 @@ mod tests {
             extension: InternExtension {
                 experience: Uint128::new(10),
                 gold: Uint128::new(100),
+                stamina: 100,
             },
         };
 
@@ -387,6 +394,11 @@ mod tests {
                         Cw721Trait {
                             display_type: None,
                             trait_type: "gold".to_string(),
+                            value: "100".to_string(),
+                        },
+                        Cw721Trait {
+                            display_type: None,
+                            trait_type: "stamina".to_string(),
                             value: "100".to_string(),
                         },
                     ]),
