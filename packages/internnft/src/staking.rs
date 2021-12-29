@@ -1,12 +1,24 @@
-use cosmwasm_std::CanonicalAddr;
+use cosmwasm_std::Addr;
 use cw721::Cw721ReceiveMsg;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Config {
-    nft_contract_addr: CanonicalAddr,
-    owner: CanonicalAddr,
+    pub nft_contract_addr: Addr,
+    pub terrand_addr: Addr,
+    pub owner: Addr,
+    pub stamina_constant: u8,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct StakingInfo {
+    pub staked: bool,
+    pub last_action_block_time: u64,
+    pub current_stamina: u8,
+    pub token_id: String,
+    pub owner: Addr,
+    pub staking_type: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
@@ -33,3 +45,10 @@ pub enum Cw721HookMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {}
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+#[serde(rename_all = "snake_case")]
+pub enum ContractQuery {
+    //loterra terrand
+    GetRandomness { round: u64 },
+}

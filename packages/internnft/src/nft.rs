@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{Addr, Binary, Coin, StdError, StdResult, Uint128};
+use cosmwasm_std::{Addr, Binary, Coin, StdError, StdResult};
 use cw721::{Expiration, OwnerOfResponse};
 use cw721_base::msg::{ExecuteMsg as CW721ExecuteMsg, QueryMsg as CW721QueryMsg};
 use cw721_base::state::Approval;
@@ -63,8 +63,8 @@ pub struct Config {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, Copy)]
 pub struct InternExtension {
-    pub experience: Uint128,
-    pub gold: Uint128,
+    pub experience: u128,
+    pub gold: u128,
     pub stamina: u8,
 }
 
