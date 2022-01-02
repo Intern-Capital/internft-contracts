@@ -218,7 +218,7 @@ mod test {
     use super::*;
 
     use cosmwasm_std::testing::{mock_dependencies, mock_env};
-    use cosmwasm_std::{from_binary, Addr, DepsMut, Uint128};
+    use cosmwasm_std::{from_binary, Addr, DepsMut};
     use internnft::nft::{Cw721AllNftInfoResponse, Cw721Metadata, Cw721Trait};
 
     const ADDR1: &str = "addr1";
@@ -233,8 +233,8 @@ mod test {
                 description: "".to_string(),
                 image: None,
                 extension: InternExtension {
-                    experience: Uint128::new(10),
-                    gold: Uint128::new(100),
+                    experience: 10,
+                    gold: 100,
                     stamina: 100,
                 },
             },
@@ -245,8 +245,8 @@ mod test {
                 description: "".to_string(),
                 image: None,
                 extension: InternExtension {
-                    experience: Uint128::new(10),
-                    gold: Uint128::new(100),
+                    experience: 100,
+                    gold: 100,
                     stamina: 100,
                 },
             },

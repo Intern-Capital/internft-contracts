@@ -216,7 +216,7 @@ mod test {
     use super::*;
 
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::{to_binary, Addr, Uint128};
+    use cosmwasm_std::{to_binary, Addr};
     use cw721::{Cw721ReceiveMsg, Expiration};
     use cw721_base::state::Approval;
     use internnft::nft::InternTokenInfo;
@@ -233,8 +233,8 @@ mod test {
                 description: "".to_string(),
                 image: None,
                 extension: InternExtension {
-                    experience: Uint128::new(10),
-                    gold: Uint128::new(100),
+                    experience: 10,
+                    gold: 100,
                     stamina: 0,
                 },
             },
@@ -245,8 +245,8 @@ mod test {
                 description: "".to_string(),
                 image: None,
                 extension: InternExtension {
-                    experience: Uint128::new(20),
-                    gold: Uint128::new(200),
+                    experience: 20,
+                    gold: 200,
                     stamina: 0,
                 },
             },
