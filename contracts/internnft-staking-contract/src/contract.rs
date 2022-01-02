@@ -2,14 +2,16 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     from_binary, to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, QueryRequest, Response,
-    StdResult, WasmQuery,
+    StdResult, Uint128, Uint64, WasmQuery,
 };
 use cw2::set_contract_version;
 use cw721::Cw721ReceiveMsg;
 use internnft::nft::InternTokenInfo;
 use internnft::nft::QueryMsg::InternNftInfo;
 use internnft::staking::ContractQuery::GetRandomness;
-use internnft::staking::{Config, Cw721HookMsg, ExecuteMsg, InstantiateMsg, QueryMsg, StakingInfo};
+use internnft::staking::{
+    Config, Cw721HookMsg, ExecuteMsg, GetRandomResponse, InstantiateMsg, QueryMsg, StakingInfo,
+};
 
 use crate::error::ContractError;
 use crate::state::{get_staking_info, CONFIG, STAKING_INFO};
@@ -110,6 +112,7 @@ pub fn stake_gold(
     Ok(Response::new())
 }
 
+// all of the calculations for added exp and added gold are done upon unstaking
 pub fn withdraw_nft(
     deps: DepsMut,
     env: Env,
@@ -140,13 +143,12 @@ pub fn withdraw_nft(
     //1. calculate stamina lost
     //1a. stamina_lost = blocks_elapsed * decay_rate (assuming linear decay)
 
-    let stamina_lost = staking_info.current_stamina as u64
-        - (env.block.height - staking_info.last_action_block_time) * config.stamina_constant as u64;
-    new_staking_info.current_stamina =
-        match (staking_info.current_stamina as u64) - stamina_lost == 0 {
-            true => 0,
-            false => staking_info.current_stamina - stamina_lost as u8,
-        };
+    let stamina_lost = staking_info.current_stamina
+        - (env.block.height - staking_info.last_action_block_time) * config.stamina_constant;
+    new_staking_info.current_stamina = match staking_info.current_stamina < stamina_lost {
+        true => 0,
+        false => staking_info.current_stamina - stamina_lost,
+    };
 
     //2. calculate the block times for which the rewards will be generated
     //2a. reward_blocks = [input_reward_block, output_reward_block]
@@ -154,15 +156,13 @@ pub fn withdraw_nft(
     //      output_reward_blocks = input_reward_block + input_stamina / decay_rate (this is assuming a linear decay rate)
     let input_reward_block = staking_info.last_action_block_time;
     let output_reward_block = match new_staking_info.current_stamina == 0 {
-        true => {
-            input_reward_block + (staking_info.current_stamina / config.stamina_constant) as u64
-        }
+        true => input_reward_block + (staking_info.current_stamina / config.stamina_constant),
         false => env.block.height,
     };
 
     //3. calculate the exp to give
     //3a. exp = total_reward_blocks
-    let added_exp = (output_reward_block - input_reward_block) as u128;
+    let added_exp = output_reward_block - input_reward_block;
     new_token_info.extension.experience = token_info.extension.experience + added_exp;
 
     //4. calculate the gold to give:
@@ -180,17 +180,29 @@ pub fn withdraw_nft(
     // Get the next round
     let _next_round = current_round + 1;
 
-    let _total_gold = 0;
-    for i in 0..output_reward_block - input_reward_block {
-        let _wasm = WasmQuery::Smart {
+    let mut added_gold = 0;
+    for i in 0..(output_reward_block - input_reward_block) {
+        let wasm = WasmQuery::Smart {
             contract_addr: config.terrand_addr.to_string(),
             msg: to_binary(&GetRandomness {
                 round: current_round - i,
             })?,
         };
+        let res: GetRandomResponse = deps.querier.query(&wasm.into())?;
+
+        //making this easy:
+        //taking randomness from terrand
+        //slicing it up
+        //taking the first 8-bit value
+        //modding it by 4
+        //adding that onto added_gold
+        //for a total of block_reward times
+
+        //if this happens to be too much, we can change it
+        added_gold += (res.randomness.as_slice()[0] % 4) as u64;
     }
 
-    //TODO: finish gold
+    new_token_info.extension.gold = token_info.extension.gold + added_gold;
 
     Ok(Response::new())
 }

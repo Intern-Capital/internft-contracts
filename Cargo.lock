@@ -422,6 +422,7 @@ dependencies = [
  "cw2 0.8.1",
  "cw721",
  "cw721-base",
+ "hex",
  "internnft",
  "schemars",
  "serde",

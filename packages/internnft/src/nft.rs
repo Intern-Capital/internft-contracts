@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{Addr, Binary, Coin, StdError, StdResult};
+use cosmwasm_std::{Addr, Binary, Coin, StdError, StdResult, Uint128, Uint64};
 use cw721::{Expiration, OwnerOfResponse};
 use cw721_base::msg::{ExecuteMsg as CW721ExecuteMsg, QueryMsg as CW721QueryMsg};
 use cw721_base::state::Approval;
@@ -63,9 +63,9 @@ pub struct Config {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, Copy)]
 pub struct InternExtension {
-    pub experience: u128,
-    pub gold: u128,
-    pub stamina: u8,
+    pub experience: u64,
+    pub gold: u64,
+    pub stamina: u64,
 }
 
 impl InternExtension {
@@ -361,6 +361,7 @@ pub struct MigrateMsg {}
 #[cfg(test)]
 mod tests {
     use super::*;
+    use cosmwasm_std::Uint128;
 
     #[test]
     fn xyz_token_info_as_cw721_nft_info() {
@@ -371,8 +372,8 @@ mod tests {
             image: None,
             approvals: vec![],
             extension: InternExtension {
-                experience: Uint128::new(10),
-                gold: Uint128::new(100),
+                experience: 10,
+                gold: 100,
                 stamina: 100,
             },
         };
