@@ -1,11 +1,9 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{
-    from_binary, to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, QueryRequest, Response,
-    StdResult, WasmQuery,
-};
+use cosmwasm_std::{from_binary, to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, QueryRequest, Response, StdResult, WasmQuery, WasmMsg, CosmosMsg};
 use cw2::set_contract_version;
 use cw721::Cw721ReceiveMsg;
+use internnft::nft::ExecuteMsg::UpdateTrait;
 use internnft::nft::InternTokenInfo;
 use internnft::nft::QueryMsg::InternNftInfo;
 use internnft::staking::ContractQuery::GetRandomness;
@@ -117,7 +115,7 @@ pub fn withdraw_nft(
     deps: DepsMut,
     env: Env,
     _info: MessageInfo,
-    nft_id: String,
+    token_id: String,
 ) -> Result<Response, ContractError> {
     //check ownership and staking status of the NFT and return if it matches
     let config: Config = CONFIG.load(deps.storage)?;
@@ -127,12 +125,12 @@ pub fn withdraw_nft(
         deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: config.nft_contract_addr.to_string(),
             msg: to_binary(&InternNftInfo {
-                token_id: nft_id.clone(),
+                token_id: token_id.clone(),
             })?,
         }))?;
 
-    let staking_info: StakingInfo = match STAKING_INFO.has(deps.storage, nft_id.clone()) {
-        true => Ok(get_staking_info(&deps, nft_id).unwrap()),
+    let staking_info: StakingInfo = match STAKING_INFO.has(deps.storage, token_id.clone()) {
+        true => Ok(get_staking_info(&deps, token_id.clone()).unwrap()),
         false => Err(ContractError::NoStakedToken {}),
     }?;
 
@@ -145,10 +143,7 @@ pub fn withdraw_nft(
 
     let stamina_lost = staking_info.current_stamina
         - (env.block.height - staking_info.last_action_block_time) * config.stamina_constant;
-    new_staking_info.current_stamina = match staking_info.current_stamina < stamina_lost {
-        true => 0,
-        false => staking_info.current_stamina - stamina_lost,
-    };
+
 
     //2. calculate the block times for which the rewards will be generated
     //2a. reward_blocks = [input_reward_block, output_reward_block]
@@ -162,8 +157,7 @@ pub fn withdraw_nft(
 
     //3. calculate the exp to give
     //3a. exp = total_reward_blocks
-    let added_exp = output_reward_block - input_reward_block;
-    new_token_info.extension.experience = token_info.extension.experience + added_exp;
+    let added_exp = (output_reward_block - input_reward_block) * config.exp_constant;
 
     //4. calculate the gold to give:
     //4a. gold =
@@ -200,7 +194,33 @@ pub fn withdraw_nft(
         }
     }
 
-    Ok(Response::new())
+    //updating stamina, exp, gold at the end
+    new_staking_info.current_stamina = match staking_info.current_stamina < stamina_lost {
+        true => 0,
+        false => staking_info.current_stamina - stamina_lost,
+    };
+    new_staking_info.staked = false;
+    new_staking_info.last_action_block_time = env.block.height;
+
+    STAKING_INFO.save(deps.storage, token_id.clone(), &new_staking_info);
+
+    //updating the token information
+    new_token_info.extension.experience = token_info.extension.experience + added_exp;
+    new_token_info.extension.gold = token_info.extension.gold + added_gold;
+
+    let message = CosmosMsg::Wasm(WasmMsg::Execute {
+        contract_addr: config.nft_contract_addr.to_string(),
+        msg: to_binary(&UpdateTrait {
+            token_id,
+            exp: new_token_info.extension.experience,
+            gold: new_token_info.extension.gold,
+            stamina: token_info.extension.stamina,
+        })?,
+        funds: vec![]
+    });
+
+    Ok(Response::new()
+        .add_message(message))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

@@ -157,7 +157,12 @@ pub enum ExecuteMsg {
     Withdraw {
         amount: Vec<Coin>,
     },
-
+    UpdateTrait {
+        token_id: String,
+        exp: u64,
+        gold: u64,
+        stamina: u64,
+    },
     /// BELOW ARE COPIED FROM CW721-BASE
     TransferNft {
         recipient: String,

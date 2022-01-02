@@ -9,6 +9,7 @@ pub struct Config {
     pub terrand_addr: Addr,
     pub owner: Addr,
     pub stamina_constant: u64,
+    pub exp_constant: u64,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

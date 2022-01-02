@@ -36,6 +36,7 @@ pub fn execute(
             ExecHandler::execute_update_config(deps, info, config)
         }
         ExecuteMsg::Withdraw { amount } => ExecHandler::execute_withdraw(deps, env, info, amount),
+        ExecuteMsg::UpdateTrait { token_id, exp, gold, stamina } => ExecHandler::execute_update_traits(deps, env, info, token_id, exp, gold, stamina),
         _ => ExecHandler::cw721_base_execute(deps, env, info, msg),
     }
 }

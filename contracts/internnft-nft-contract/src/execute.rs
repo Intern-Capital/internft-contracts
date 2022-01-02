@@ -1,7 +1,4 @@
-use cosmwasm_std::{
-    Attribute, BankMsg, Binary, Coin, DepsMut, Empty, Env, MessageInfo, Order, Response, StdError,
-    StdResult, Storage,
-};
+use cosmwasm_std::{Addr, Attribute, BankMsg, Binary, Coin, DepsMut, Empty, Env, MessageInfo, Order, Response, StdError, StdResult, Storage};
 use cw721::{ContractInfoResponse, Cw721ReceiveMsg};
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, Cw721Contract};
 use internnft::nft::{
@@ -10,7 +7,7 @@ use internnft::nft::{
 };
 
 use crate::error::ContractError;
-use crate::state::{tokens, CONFIG, OWNER};
+use crate::state::{tokens, CONFIG, OWNER, STAKING_CONTRACT};
 
 const INTERN: &str = "intern";
 
@@ -40,6 +37,32 @@ pub fn execute_mint(
     Ok(Response::new()
         .add_attribute("action", "mint")
         .add_attribute("minter", info.sender))
+}
+
+pub fn execute_update_traits(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    token_id: String,
+    exp: u64,
+    gold: u64,
+    stamina: u64,
+) -> Result<Response, ContractError> {
+    let staking_contract = STAKING_CONTRACT.load(deps.storage)?;
+    let token = tokens().load(deps.storage, &token_id)?;
+
+    //right now, only the staking contract can update the traits
+    if info.sender != staking_contract {
+        return Err(ContractError::Unauthorized {});
+    }
+
+    let mut new_token = token.clone();
+    new_token.extension.experience = exp;
+    new_token.extension.gold = gold;
+    new_token.extension.stamina = stamina;
+    tokens().replace(deps.storage, &token_id, Some(&new_token), Some(&token));
+
+    Ok(Response::new()) //TODO: fix this
 }
 
 #[allow(dead_code)]
