@@ -39,8 +39,7 @@ pub enum ExecuteMsg {
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 #[serde(rename_all = "snake_case")]
 pub enum Cw721HookMsg {
-    StakeGold {},
-    StakeExp {},
+    Stake { staking_type: String },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

@@ -18,4 +18,7 @@ pub enum ContractError {
 
     #[error("Token Already Staked")]
     TokenAlreadyStaked {},
+
+    #[error("Invalid Staking Type")]
+    InvalidStakingType {},
 }

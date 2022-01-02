@@ -55,27 +55,24 @@ pub fn receive_cw721(
     cw721_msg: Cw721ReceiveMsg,
 ) -> Result<Response, ContractError> {
     match from_binary(&cw721_msg.msg) {
-        Ok(Cw721HookMsg::StakeGold {}) => stake_gold(deps, env, info.sender, cw721_msg),
-        Ok(Cw721HookMsg::StakeExp {}) => stake_exp(deps, env, info.sender, cw721_msg),
+        Ok(Cw721HookMsg::Stake { staking_type }) => {
+            stake(deps, env, info.sender, staking_type, cw721_msg)
+        }
         Err(_) => Err(ContractError::InvalidCw721ReceiveMsg {}),
     }
 }
 
-pub fn stake_exp(
-    _deps: DepsMut,
-    _env: Env,
-    _sender: Addr,
-    _msg: Cw721ReceiveMsg,
-) -> Result<Response, ContractError> {
-    Ok(Response::new())
-}
-
-pub fn stake_gold(
+pub fn stake(
     deps: DepsMut,
     env: Env,
     sender: Addr,
+    staking_type: String,
     msg: Cw721ReceiveMsg,
 ) -> Result<Response, ContractError> {
+    if staking_type != "gold" && staking_type != "exp" {
+        return Err(ContractError::InvalidStakingType {});
+    }
+
     let config: Config = CONFIG.load(deps.storage)?;
 
     //if this returns an error, the token does not exist and we exit
@@ -87,30 +84,43 @@ pub fn stake_gold(
             })?,
         }))?;
 
-    let mut staking_info: StakingInfo = match STAKING_INFO.has(deps.storage, msg.token_id.clone()) {
-        true => get_staking_info(&deps, msg.token_id).unwrap(),
+    let staking_info: StakingInfo = match STAKING_INFO.has(deps.storage, msg.token_id.clone()) {
+        true => get_staking_info(&deps, msg.token_id.clone()).unwrap(),
         false => StakingInfo {
             staked: false,
             last_action_block_time: 0,
             current_stamina: token_info.extension.stamina,
-            token_id: msg.token_id,
+            token_id: msg.token_id.clone(),
             owner: sender,
             staking_type: "".to_string(),
         },
     };
 
-    staking_info.staked = true;
-    staking_info.last_action_block_time = env.block.height;
-    staking_info.staking_type = "gold".to_string();
+    let mut new_staking_info = staking_info.clone();
+
+    new_staking_info.staked = true;
+    new_staking_info.last_action_block_time = env.block.height;
+    new_staking_info.staking_type = staking_type;
 
     //if the current stamina isn't the same as the max stamina in the NFT, then update the stamina
     if staking_info.current_stamina != token_info.extension.stamina {
-        //update stamina
+        let stamina_to_add =
+            (env.block.height - staking_info.last_action_block_time) * config.stamina_constant;
+        new_staking_info.current_stamina =
+            match token_info.extension.stamina > staking_info.current_stamina + stamina_to_add {
+                true => staking_info.current_stamina + stamina_to_add,
+                false => token_info.extension.stamina,
+            };
     }
+
+    STAKING_INFO.update(deps.storage, msg.token_id, |token| match token {
+        None => Err(ContractError::NoStakedToken {}),
+        Some(_) => Ok(new_staking_info),
+    })?;
 
     //once stamina is updated, finish
 
-    Ok(Response::new())
+    Ok(Response::new()) //TODO: add response
 }
 
 // all of the calculations for added exp and added gold are done upon unstaking
@@ -221,7 +231,7 @@ pub fn withdraw_nft(
         funds: vec![],
     });
 
-    Ok(Response::new().add_message(message))
+    Ok(Response::new().add_message(message)) //TODO: add response
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
