@@ -180,29 +180,25 @@ pub fn withdraw_nft(
     // Get the next round
     let _next_round = current_round + 1;
 
-    let mut added_gold = 0;
-    for i in 0..(output_reward_block - input_reward_block) {
+    let mut added_gold: u64 = 0;
+    let mut reward_block = 0;
+
+    while reward_block < output_reward_block-input_reward_block {
         let wasm = WasmQuery::Smart {
             contract_addr: config.terrand_addr.to_string(),
             msg: to_binary(&GetRandomness {
-                round: current_round - i,
+                round: current_round - reward_block,
             })?,
         };
         let res: GetRandomResponse = deps.querier.query(&wasm.into())?;
-
-        //making this easy:
-        //taking randomness from terrand
-        //slicing it up
-        //taking the first 8-bit value
-        //modding it by 4
-        //adding that onto added_gold
-        //for a total of block_reward times
-
-        //if this happens to be too much, we can change it
-        added_gold += (res.randomness.as_slice()[0] % 4) as u64;
+        for slice in res.randomness.as_slice()  {
+            added_gold += *slice as u64;
+            reward_block+=1;
+            if reward_block >= output_reward_block-input_reward_block {
+                break;
+            }
+        }
     }
-
-    new_token_info.extension.gold = token_info.extension.gold + added_gold;
 
     Ok(Response::new())
 }
