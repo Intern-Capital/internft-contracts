@@ -216,7 +216,7 @@ mod test {
     use super::*;
 
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::{to_binary, Addr, Uint128};
+    use cosmwasm_std::{to_binary, Addr};
     use cw721::{Cw721ReceiveMsg, Expiration};
     use cw721_base::state::Approval;
     use internnft::nft::InternTokenInfo;

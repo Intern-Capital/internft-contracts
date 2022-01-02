@@ -2,7 +2,7 @@
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     from_binary, to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, QueryRequest, Response,
-    StdResult, Uint128, Uint64, WasmQuery,
+    StdResult, WasmQuery,
 };
 use cw2::set_contract_version;
 use cw721::Cw721ReceiveMsg;

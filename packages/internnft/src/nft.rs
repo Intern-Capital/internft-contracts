@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{Addr, Binary, Coin, StdError, StdResult, Uint128, Uint64};
+use cosmwasm_std::{Addr, Binary, Coin, StdError, StdResult};
 use cw721::{Expiration, OwnerOfResponse};
 use cw721_base::msg::{ExecuteMsg as CW721ExecuteMsg, QueryMsg as CW721QueryMsg};
 use cw721_base::state::Approval;
@@ -361,7 +361,7 @@ pub struct MigrateMsg {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::Uint128;
+    
 
     #[test]
     fn xyz_token_info_as_cw721_nft_info() {
