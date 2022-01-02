@@ -167,45 +167,50 @@ pub fn withdraw_nft(
         false => env.block.height,
     };
 
-    //3. calculate the exp to give
-    //3a. exp = total_reward_blocks
-    let added_exp = (output_reward_block - input_reward_block) * config.exp_constant;
+    let mut added_exp = 0;
+    let mut added_gold = 0;
 
-    //4. calculate the gold to give:
-    //4a. gold =
-    const GENESIS_TIME: u64 = 1595431050;
-    const PERIOD: u64 = 30;
+    if staking_info.staking_type == "exp" {
+        //3. calculate the exp to give
+        //3a. exp = total_reward_blocks
+        added_exp = (output_reward_block - input_reward_block) * config.exp_constant;
+    } else if staking_info.staking_type == "gold" {
+        //4. calculate the gold to give:
+        //4a. gold =
+        const GENESIS_TIME: u64 = 1595431050;
+        const PERIOD: u64 = 30;
 
-    let timestamp_now = env.block.time.seconds();
+        let timestamp_now = env.block.time.seconds();
 
-    // Get the current block time from genesis time
-    let from_genesis = timestamp_now - GENESIS_TIME;
+        // Get the current block time from genesis time
+        let from_genesis = timestamp_now - GENESIS_TIME;
 
-    // Get the current round
-    let current_round = from_genesis / PERIOD;
-    // Get the next round
-    let _next_round = current_round + 1;
+        // Get the current round
+        let current_round = from_genesis / PERIOD;
+        // Get the next round
+        let _next_round = current_round + 1;
 
-    let mut added_gold: u64 = 0;
-    let mut reward_block = 0;
+        let mut reward_block = 0;
 
-    while reward_block < output_reward_block - input_reward_block {
-        let wasm = WasmQuery::Smart {
-            contract_addr: config.terrand_addr.to_string(),
-            msg: to_binary(&GetRandomness {
-                round: current_round - reward_block,
-            })?,
-        };
-        let res: GetRandomResponse = deps.querier.query(&wasm.into())?;
-        for slice in res.randomness.as_slice() {
-            added_gold += *slice as u64;
-            reward_block += 1;
-            if reward_block >= output_reward_block - input_reward_block {
-                break;
+        while reward_block < output_reward_block - input_reward_block {
+            let wasm = WasmQuery::Smart {
+                contract_addr: config.terrand_addr.to_string(),
+                msg: to_binary(&GetRandomness {
+                    round: current_round - reward_block,
+                })?,
+            };
+            let res: GetRandomResponse = deps.querier.query(&wasm.into())?;
+            for slice in res.randomness.as_slice() {
+                added_gold += *slice as u64;
+                reward_block += 1;
+                if reward_block >= output_reward_block - input_reward_block {
+                    break;
+                }
             }
         }
+    } else {
+        return Err(ContractError::InvalidStakingType {})
     }
-
     //updating stamina, exp, gold at the end
     new_staking_info.current_stamina = match staking_info.current_stamina < stamina_lost {
         true => 0,
