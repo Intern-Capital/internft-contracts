@@ -1,4 +1,7 @@
-use cosmwasm_std::{Addr, Attribute, BankMsg, Binary, Coin, DepsMut, Empty, Env, MessageInfo, Order, Response, StdError, StdResult, Storage};
+use cosmwasm_std::{
+    Attribute, BankMsg, Binary, Coin, DepsMut, Empty, Env, MessageInfo, Order, Response, StdError,
+    StdResult, Storage,
+};
 use cw721::{ContractInfoResponse, Cw721ReceiveMsg};
 use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, Cw721Contract};
 use internnft::nft::{
@@ -60,7 +63,7 @@ pub fn execute_update_traits(
     new_token.extension.experience = exp;
     new_token.extension.gold = gold;
     new_token.extension.stamina = stamina;
-    tokens().replace(deps.storage, &token_id, Some(&new_token), Some(&token));
+    tokens().replace(deps.storage, &token_id, Some(&new_token), Some(&token))?;
 
     Ok(Response::new()) //TODO: fix this
 }

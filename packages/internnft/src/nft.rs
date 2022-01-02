@@ -366,7 +366,6 @@ pub struct MigrateMsg {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    
 
     #[test]
     fn xyz_token_info_as_cw721_nft_info() {

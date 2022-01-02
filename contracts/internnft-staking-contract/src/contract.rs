@@ -1,6 +1,9 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
-use cosmwasm_std::{from_binary, to_binary, Addr, Binary, Deps, DepsMut, Env, MessageInfo, QueryRequest, Response, StdResult, WasmQuery, WasmMsg, CosmosMsg};
+use cosmwasm_std::{
+    from_binary, to_binary, Addr, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, QueryRequest,
+    Response, StdResult, WasmMsg, WasmQuery,
+};
 use cw2::set_contract_version;
 use cw721::Cw721ReceiveMsg;
 use internnft::nft::ExecuteMsg::UpdateTrait;
@@ -144,7 +147,6 @@ pub fn withdraw_nft(
     let stamina_lost = staking_info.current_stamina
         - (env.block.height - staking_info.last_action_block_time) * config.stamina_constant;
 
-
     //2. calculate the block times for which the rewards will be generated
     //2a. reward_blocks = [input_reward_block, output_reward_block]
     //  if updated_stamina = 0:
@@ -177,7 +179,7 @@ pub fn withdraw_nft(
     let mut added_gold: u64 = 0;
     let mut reward_block = 0;
 
-    while reward_block < output_reward_block-input_reward_block {
+    while reward_block < output_reward_block - input_reward_block {
         let wasm = WasmQuery::Smart {
             contract_addr: config.terrand_addr.to_string(),
             msg: to_binary(&GetRandomness {
@@ -185,10 +187,10 @@ pub fn withdraw_nft(
             })?,
         };
         let res: GetRandomResponse = deps.querier.query(&wasm.into())?;
-        for slice in res.randomness.as_slice()  {
+        for slice in res.randomness.as_slice() {
             added_gold += *slice as u64;
-            reward_block+=1;
-            if reward_block >= output_reward_block-input_reward_block {
+            reward_block += 1;
+            if reward_block >= output_reward_block - input_reward_block {
                 break;
             }
         }
@@ -202,7 +204,7 @@ pub fn withdraw_nft(
     new_staking_info.staked = false;
     new_staking_info.last_action_block_time = env.block.height;
 
-    STAKING_INFO.save(deps.storage, token_id.clone(), &new_staking_info);
+    STAKING_INFO.save(deps.storage, token_id.clone(), &new_staking_info)?;
 
     //updating the token information
     new_token_info.extension.experience = token_info.extension.experience + added_exp;
@@ -216,11 +218,10 @@ pub fn withdraw_nft(
             gold: new_token_info.extension.gold,
             stamina: token_info.extension.stamina,
         })?,
-        funds: vec![]
+        funds: vec![],
     });
 
-    Ok(Response::new()
-        .add_message(message))
+    Ok(Response::new().add_message(message))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
