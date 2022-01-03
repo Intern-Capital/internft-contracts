@@ -201,7 +201,7 @@ pub fn withdraw_nft(
             };
             let res: GetRandomResponse = deps.querier.query(&wasm.into())?;
             for slice in res.randomness.as_slice() {
-                added_gold += *slice as u64;
+                added_gold += (*slice % 4) as u64;
                 reward_block += 1;
                 if reward_block >= output_reward_block - input_reward_block {
                     break;
