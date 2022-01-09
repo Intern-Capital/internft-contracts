@@ -45,8 +45,8 @@ pub fn instantiate(
         .add_attribute("owner", info.sender)
         .add_attribute("nft_contract_address", msg.nft_contract_addr)
         .add_attribute("terrand_addr", msg.terrand_addr)
-        .add_attribute("stamina_constant", msg.stamina_constant)
-        .add_attribute("exp_constant", msg.exp_constant))
+        .add_attribute("stamina_constant", msg.stamina_constant.to_string())
+        .add_attribute("exp_constant", msg.exp_constant.to_string()))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -58,7 +58,7 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Receive(msg) => receive_cw721(deps, env, info, msg),
-        ExecuteMsg::UpdateConfig {nft_contract_addr, terrand_addr, owner, stamina_constant, exp_constant} => update_config(deps, env, info, nft_contract_addr, terrand_addr, owner, stamina_constant, exp_constant),
+        ExecuteMsg::UpdateConfig {nft_contract_addr, terrand_addr, owner, stamina_constant, exp_constant} => update_config(deps, info, nft_contract_addr, terrand_addr, owner, stamina_constant, exp_constant),
         ExecuteMsg::WithdrawNft { nft_id } => withdraw_nft(deps, env, info, nft_id),
     }
 }
@@ -79,7 +79,6 @@ pub fn receive_cw721(
 
 pub fn update_config(
     deps: DepsMut,
-    env: Env,
     info: MessageInfo,
     nft_contract_addr: Addr,
     terrand_addr: Addr,
@@ -108,8 +107,8 @@ pub fn update_config(
         .add_attribute("owner", new_config.owner)
         .add_attribute("nft_contract_address", new_config.nft_contract_addr)
         .add_attribute("terrand_addr", new_config.terrand_addr)
-        .add_attribute("stamina_constant", new_config.stamina_constant)
-        .add_attribute("exp_constant", new_config.exp_constant))
+        .add_attribute("stamina_constant", new_config.stamina_constant.to_string())
+        .add_attribute("exp_constant", new_config.exp_constant.to_string()))
 }
 
 pub fn stake(
@@ -290,7 +289,7 @@ pub fn withdraw_nft(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg { QueryMsg::GetConfig {} => query_config(deps) }
 }
 
