@@ -26,13 +26,27 @@ pub fn instantiate(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
-    _msg: InstantiateMsg,
+    msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
+
+    let config: Config = Config{
+        nft_contract_addr: msg.nft_contract_addr.clone(),
+        terrand_addr: msg.terrand_addr.clone(),
+        owner: info.sender.clone(),
+        stamina_constant: msg.stamina_constant,
+        exp_constant: msg.exp_constant,
+    };
+
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
+    CONFIG.save(deps.storage, &config);
 
     Ok(Response::new()
         .add_attribute("method", "instantiate")
-        .add_attribute("owner", info.sender))
+        .add_attribute("owner", info.sender)
+        .add_attribute("nft_contract_address", msg.nft_contract_addr)
+        .add_attribute("terrand_addr", msg.terrand_addr)
+        .add_attribute("stamina_constant", msg.stamina_constant)
+        .add_attribute("exp_constant", msg.exp_constant))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -44,6 +58,7 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Receive(msg) => receive_cw721(deps, env, info, msg),
+        ExecuteMsg::UpdateConfig {nft_contract_addr, terrand_addr, owner, stamina_constant, exp_constant} => update_config(deps, env, info, nft_contract_addr, terrand_addr, owner, stamina_constant, exp_constant),
         ExecuteMsg::WithdrawNft { nft_id } => withdraw_nft(deps, env, info, nft_id),
     }
 }
@@ -60,6 +75,41 @@ pub fn receive_cw721(
         }
         Err(_) => Err(ContractError::InvalidCw721ReceiveMsg {}),
     }
+}
+
+pub fn update_config(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    nft_contract_addr: Addr,
+    terrand_addr: Addr,
+    owner: Addr,
+    stamina_constant: u64,
+    exp_constant: u64,
+) -> Result<Response, ContractError> {
+    let config: Config = CONFIG.load(deps.storage)?;
+
+    if info.sender != config.owner {
+        return Err(ContractError::Unauthorized {});
+    }
+
+    let new_config: Config = Config{
+        nft_contract_addr,
+        terrand_addr,
+        owner,
+        stamina_constant,
+        exp_constant,
+    };
+
+    CONFIG.save(deps.storage, &new_config)?;
+
+    Ok(Response::new()
+        .add_attribute("method", "instantiate")
+        .add_attribute("owner", new_config.owner)
+        .add_attribute("nft_contract_address", new_config.nft_contract_addr)
+        .add_attribute("terrand_addr", new_config.terrand_addr)
+        .add_attribute("stamina_constant", new_config.stamina_constant)
+        .add_attribute("exp_constant", new_config.exp_constant))
 }
 
 pub fn stake(
@@ -241,5 +291,10 @@ pub fn withdraw_nft(
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
-    match msg {}
+    match msg { QueryMsg::GetConfig {} => query_config(deps) }
+}
+
+pub fn query_config(deps: Deps) -> StdResult<Binary> {
+    let config = CONFIG.load(deps.storage)?;
+    Ok(to_binary(&config)?)
 }
