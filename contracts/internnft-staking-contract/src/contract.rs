@@ -318,10 +318,18 @@ pub fn withdraw_nft(
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
-    match msg { QueryMsg::GetConfig {} => query_config(deps) }
+    match msg {
+        QueryMsg::GetConfig {} => query_config(deps),
+        QueryMsg::GetStakingInfo {token_id} => query_staking_info(deps, token_id),
+    }
 }
 
 pub fn query_config(deps: Deps) -> StdResult<Binary> {
     let config = CONFIG.load(deps.storage)?;
     Ok(to_binary(&config)?)
+}
+
+pub fn query_staking_info(deps: Deps, token_id: String) -> StdResult<Binary> {
+    let staking_info = STAKING_INFO.load(deps.storage, token_id)?;
+    Ok(to_binary(&staking_info)?)
 }
