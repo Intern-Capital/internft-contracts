@@ -5,8 +5,8 @@ use cosmwasm_std::{
     Response, StdResult, WasmMsg, WasmQuery,
 };
 use cw2::set_contract_version;
-use cw721::Cw721ReceiveMsg;
-use internnft::nft::ExecuteMsg::UpdateTrait;
+use cw721::{Cw721ExecuteMsg, Cw721ReceiveMsg};
+use internnft::nft::ExecuteMsg::{TransferNft, UpdateTrait};
 use internnft::nft::InternTokenInfo;
 use internnft::nft::QueryMsg::InternNftInfo;
 use internnft::staking::ContractQuery::GetRandomness;
@@ -182,7 +182,7 @@ pub fn stake(
 pub fn withdraw_nft(
     deps: DepsMut,
     env: Env,
-    _info: MessageInfo,
+    info: MessageInfo,
     token_id: String,
 ) -> Result<Response, ContractError> {
     //check ownership and staking status of the NFT and return if it matches
@@ -204,6 +204,10 @@ pub fn withdraw_nft(
 
     let mut new_staking_info: StakingInfo = staking_info.clone();
     let mut new_token_info: InternTokenInfo = token_info.clone();
+
+    if token_info.owner != info.sender {
+        Err(ContractError::Unauthorized {})
+    }
 
     //update gold or experience
     //1. calculate stamina lost
@@ -280,10 +284,10 @@ pub fn withdraw_nft(
     new_token_info.extension.experience = token_info.extension.experience + added_exp;
     new_token_info.extension.gold = token_info.extension.gold + added_gold;
 
-    let message = CosmosMsg::Wasm(WasmMsg::Execute {
+    let update_message = CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: config.nft_contract_addr.to_string(),
         msg: to_binary(&UpdateTrait {
-            token_id,
+            token_id: token_id.clone(),
             exp: new_token_info.extension.experience,
             gold: new_token_info.extension.gold,
             stamina: token_info.extension.stamina,
@@ -291,7 +295,25 @@ pub fn withdraw_nft(
         funds: vec![],
     });
 
-    Ok(Response::new().add_message(message)) //TODO: add response
+    let transfer_message = CosmosMsg::Wasm(WasmMsg::Execute {
+        contract_addr: config.nft_contract_addr.to_string(),
+        msg: to_binary(&Cw721ExecuteMsg::TransferNft {
+            recipient: String::from(staking_info.owner),
+            token_id: token_id.clone(),
+        })?,
+        funds: vec![]
+    });
+
+    let msgs = vec![update_message, transfer_message];
+
+    Ok(Response::new()
+        .add_messages(msgs)
+        .add_attribute("action", "unstake")
+        .add_attribute("token_id", token_id)
+        .add_attribute("staking_type", staking_info.staking_type)
+        .add_attribute("gold_added", added_gold)
+        .add_attribute("exp_added", added_exp)
+        .add_attribute("stamina_lost", stamina_lost))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
