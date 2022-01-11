@@ -32,7 +32,7 @@ rustup target add wasm32-unknown-unknown
 Run all tests for the workspace:
 
 ```sh
-cargo test
+cargo testing
 ```
 
 ### Compiling

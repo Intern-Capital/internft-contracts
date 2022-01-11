@@ -27,6 +27,7 @@ pub struct StakingInfo {
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 #[serde(rename_all = "snake_case")]
 pub struct InstantiateMsg {
+    pub owner: Addr,
     pub nft_contract_addr: Addr,
     pub terrand_addr: Addr,
     pub stamina_constant: u64,

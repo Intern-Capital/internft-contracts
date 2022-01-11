@@ -10,7 +10,7 @@ use internnft::nft::{
 };
 
 use crate::error::ContractError;
-use crate::state::{tokens, CONFIG, OWNER, STAKING_CONTRACT};
+use crate::state::{tokens, CONFIG, OWNER};
 
 const INTERN: &str = "intern";
 
@@ -51,7 +51,8 @@ pub fn execute_update_traits(
     gold: u64,
     stamina: u64,
 ) -> Result<Response, ContractError> {
-    let staking_contract = STAKING_CONTRACT.load(deps.storage)?;
+    let config = CONFIG.load(deps.storage)?;
+    let staking_contract = config.staking_contract;
     let token = tokens().load(deps.storage, &token_id)?;
 
     //right now, only the staking contract can update the traits

@@ -27,6 +27,3 @@ pub fn tokens<'a>() -> IndexedMap<'a, &'a str, InternTokenInfo, TokenIndexes<'a>
 }
 
 pub const OWNER: Item<String> = Item::new("owner");
-
-// staking contract address
-pub const STAKING_CONTRACT: Item<String> = Item::new("staking_contract");

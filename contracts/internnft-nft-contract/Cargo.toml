@@ -18,7 +18,7 @@ exclude = [
 crate-type = ["cdylib", "rlib"]
 
 [features]
-# for more explicit tests, cargo test --features=backtraces
+# for more explicit tests, cargo testing --features=backtraces
 backtraces = ["cosmwasm-std/backtraces"]
 
 [dependencies]

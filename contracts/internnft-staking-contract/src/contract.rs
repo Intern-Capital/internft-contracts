@@ -25,24 +25,24 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 pub fn instantiate(
     deps: DepsMut,
     _env: Env,
-    info: MessageInfo,
+    _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
 
     let config: Config = Config{
         nft_contract_addr: msg.nft_contract_addr.clone(),
         terrand_addr: msg.terrand_addr.clone(),
-        owner: info.sender.clone(),
+        owner: msg.owner.clone(),
         stamina_constant: msg.stamina_constant,
         exp_constant: msg.exp_constant,
     };
 
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-    CONFIG.save(deps.storage, &config);
+    CONFIG.save(deps.storage, &config)?;
 
     Ok(Response::new()
         .add_attribute("method", "instantiate")
-        .add_attribute("owner", info.sender)
+        .add_attribute("owner", msg.owner)
         .add_attribute("nft_contract_address", msg.nft_contract_addr)
         .add_attribute("terrand_addr", msg.terrand_addr)
         .add_attribute("stamina_constant", msg.stamina_constant.to_string())
@@ -145,11 +145,15 @@ pub fn stake(
         },
     };
 
+    if staking_info.staked {
+        Err(ContractError::TokenAlreadyStaked {})
+    }
+
     let mut new_staking_info = staking_info.clone();
 
     new_staking_info.staked = true;
     new_staking_info.last_action_block_time = env.block.height;
-    new_staking_info.staking_type = staking_type;
+    new_staking_info.staking_type = staking_type.clone();
 
     //if the current stamina isn't the same as the max stamina in the NFT, then update the stamina
     if staking_info.current_stamina != token_info.extension.stamina {
@@ -162,14 +166,16 @@ pub fn stake(
             };
     }
 
-    STAKING_INFO.update(deps.storage, msg.token_id, |token| match token {
-        None => Err(ContractError::NoStakedToken {}),
-        Some(_) => Ok(new_staking_info),
-    })?;
+    if STAKING_INFO.has(deps.storage, msg.token_id.clone()) {}
+
+    STAKING_INFO.update(deps.storage, msg.token_id.clone(), new_staking_info);
 
     //once stamina is updated, finish
 
-    Ok(Response::new()) //TODO: add response
+    Ok(Response::new()
+        .add_attribute("action", "stake")
+        .add_attribute("token_id", msg.token_id)
+        .add_attribute("staking_type", staking_type))
 }
 
 // all of the calculations for added exp and added gold are done upon unstaking

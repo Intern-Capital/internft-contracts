@@ -36,7 +36,7 @@ jobs:
       - run: cargo fmt -- --check
 
   unit-test:
-    name: Actions - test
+    name: Actions - testing
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -51,6 +51,6 @@ jobs:
           profile: minimal
       - run: cargo fetch --verbose
       - run: cargo build
-      - run: cargo test --verbose --all
+      - run: cargo testing --verbose --all
         env:
           RUST_BACKTRACE: 1

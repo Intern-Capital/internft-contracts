@@ -1,4 +1,4 @@
-use cosmwasm_std::{Coin, ContractResult, from_binary, from_slice, OwnedDeps, Querier, QuerierResult, QueryRequest, SystemError, SystemResult, to_binary, WasmQuery};
+use cosmwasm_std::{Addr, Coin, ContractResult, from_binary, from_slice, OwnedDeps, Querier, QuerierResult, QueryRequest, SystemError, SystemResult, to_binary, WasmQuery};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -6,11 +6,13 @@ use cosmwasm_std::testing::{MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADD
 use internnft::staking::GetRandomResponse;
 
 use terra_cosmwasm::{TerraQueryWrapper};
+use internnft::nft::{InternExtension, InternTokenInfo};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
     GetRandomness { round: u64 },
+    InternNftInfo {token_id: String},
 }
 
 pub fn mock_dependencies(
@@ -53,9 +55,23 @@ impl WasmMockQuerier {
                 msg,
            }) => match from_binary(msg).unwrap() {
                 QueryMsg::GetRandomness { round: _ } => {
-                    SystemResult::Ok(ContractResult::from(to_binary(&GetRandomResponse {
-                        randomness: to_binary("yTBW2ubloeFa+ZRh08Jt+4jVQHHGMX4s3j8mTYKc3oQ=").unwrap(),
-                        worker: "terra1x46rqay4d3cssq8gxxvqz8xt6nwlz4td20k38v".to_string()
+                        SystemResult::Ok(ContractResult::from(to_binary(&GetRandomResponse {
+                            randomness: to_binary("yTBW2ubloeFa+ZRh08Jt+4jVQHHGMX4s3j8mTYKc3oQ=").unwrap(),
+                            worker: "terra1x46rqay4d3cssq8gxxvqz8xt6nwlz4td20k38v".to_string()
+                        })))
+                },
+                QueryMsg::InternNftInfo {token_id} => {
+                    SystemResult::Ok(ContractResult::from(to_binary(&InternTokenInfo {
+                        owner: Addr::unchecked("addr0000".to_string()),
+                        approvals: vec![],
+                        name: "0".to_string(),
+                        description: "test".to_string(),
+                        image: None,
+                        extension: InternExtension {
+                            experience: 0,
+                            gold: 0,
+                            stamina: 100
+                        }
                     })))
                 }
             },
