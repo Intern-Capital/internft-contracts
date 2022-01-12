@@ -370,9 +370,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn xyz_token_info_as_cw721_nft_info() {
+    fn intern_token_info_as_cw721_nft_info() {
         let info = InternTokenInfo {
-            name: "xyz #1".to_string(),
+            name: "intern #1".to_string(),
             owner: Addr::unchecked("testing owner"),
             description: "testing description".to_string(),
             image: None,
@@ -389,7 +389,7 @@ mod tests {
             Cw721NftInfoResponse {
                 token_uri: None,
                 extension: Cw721Metadata {
-                    name: Some("xyz #1".to_string()),
+                    name: Some("intern #1".to_string()),
                     description: Some("testing description".to_string()),
                     image: None,
                     attributes: Some(vec![

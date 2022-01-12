@@ -17,9 +17,6 @@ pub enum ContractError {
     #[error("Cannot set approval that is already expired")]
     Expired {},
 
-    #[error("xyz token supply has been exhausted")]
-    SupplyExhausted {},
-
     #[error("Per-wallet token allotment exceeded")]
     WalletLimit {},
 
