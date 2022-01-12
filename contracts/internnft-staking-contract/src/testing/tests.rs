@@ -707,7 +707,6 @@ fn test_stake_unstake_gold_stamina_depleted() {
     .unwrap();
 
     assert_eq!(query_staking_res, test_staking_res);
-
 }
 
 #[test]
@@ -823,5 +822,4 @@ fn test_stake_unstake_exp_stamina_depleted() {
     })
     .unwrap();
     assert_eq!(query_staking_res, test_staking_res);
-
 }
