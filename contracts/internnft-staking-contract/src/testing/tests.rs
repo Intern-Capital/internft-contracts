@@ -299,8 +299,8 @@ fn test_stake_unstake_gold_stamina_not_depleted() {
     let unstake_res = withdraw_nft(deps.as_mut(), env, info, "0".to_string()).unwrap();
 
     let mut added_gold = 0;
-    for i in 0..staked_blocks as usize {
-        added_gold+=gold_rewards[i];
+    for reward in gold_rewards.iter().take(staked_blocks as usize) {
+        added_gold+=*reward;
     }
 
     let msgs = vec![
@@ -505,4 +505,202 @@ fn test_unstake_unowned() {
         Err(ContractError::Unauthorized {}) => (),
         _ => panic!("Must return no staked token error"),
     }
+}
+
+#[test]
+fn test_stake_unstake_gold_stamina_depleted() {
+    let mut deps = mock_dependencies(&[]);
+    let mut env = mock_env();
+    env.block.time = Timestamp::from_seconds(1595431050+1000000);
+    let instantiate_msg = InstantiateMsg {
+        owner: Addr::unchecked("owner0000"),
+        nft_contract_addr: Addr::unchecked("internnft0000"),
+        terrand_addr: Addr::unchecked("terrand0000"),
+        stamina_constant: 1,
+        exp_constant: 1
+    };
+
+    let info = mock_info("addr0000", &[]);
+
+    let _instantiate_res = instantiate(deps.as_mut(), mock_env(), info.clone(), instantiate_msg).unwrap();
+
+    let hook_msg = Cw721HookMsg::Stake { staking_type: "gold".to_string() };
+
+    let receive_msg = Cw721ReceiveMsg {
+        sender: info.sender.to_string(),
+        token_id: "0".to_string(),
+        msg: to_binary(&hook_msg).unwrap(),
+    };
+
+    let staking_res = stake(deps.as_mut(), env.clone(), info.sender.clone(), "gold".to_string(), receive_msg).unwrap();
+
+    let test_staking_res = Response::new()
+        .add_attribute("action", "stake")
+        .add_attribute("token_id", "0".to_string())
+        .add_attribute("staking_type", "gold".to_string());
+
+    assert_eq!(staking_res, test_staking_res);
+
+    let query_staking_res = query_staking_info(deps.as_ref(), "0".to_string()).unwrap();
+
+    let test_staking_res = to_binary(&StakingInfo {
+        staked: true,
+        last_action_block_time: env.block.height,
+        current_stamina: 100,
+        token_id: "0".to_string(),
+        owner: info.sender.clone(),
+        staking_type: "gold".to_string()
+    }).unwrap();
+
+    assert_eq!(query_staking_res, test_staking_res);
+
+    let staked_blocks = 102;
+    env.block.height += staked_blocks;
+
+    let unstake_res = withdraw_nft(deps.as_mut(), env.clone(), info.clone(), "0".to_string()).unwrap();
+
+    let added_gold = 144;
+
+    let msgs = vec![
+        CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: "internnft0000".to_string(),
+            msg: to_binary(&UpdateTrait {
+                token_id: "0".to_string(),
+                exp: 0,
+                gold: added_gold,
+                stamina: 100,
+            }).unwrap(),
+            funds: vec![],
+        }),
+        CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: "internnft0000".to_string(),
+            msg: to_binary(&Cw721ExecuteMsg::TransferNft {
+                recipient: "addr0000".to_string(),
+                token_id: "0".to_string(),
+            }).unwrap(),
+            funds: vec![]
+        })
+    ];
+
+    let unstake_test_res = Response::new()
+        .add_messages(msgs)
+        .add_attribute("action", "unstake")
+        .add_attribute("token_id", "0".to_string())
+        .add_attribute("staking_type", "gold".to_string())
+        .add_attribute("gold_added", added_gold.to_string())
+        .add_attribute("exp_added", 0.to_string())
+        .add_attribute("stamina_lost", 100.to_string())
+        .add_attribute("new_stamina", 0.to_string());
+
+    assert_eq!(unstake_res, unstake_test_res);
+
+    let _query_staking_res = query_staking_info(deps.as_ref(), "0".to_string()).unwrap();
+
+    let _test_staking_res = to_binary(&StakingInfo {
+        staked: false,
+        last_action_block_time: env.block.height,
+        current_stamina: 100,
+        token_id: "0".to_string(),
+        owner: info.sender,
+        staking_type: "exp".to_string()
+    }).unwrap();
+}
+
+#[test]
+fn test_stake_unstake_exp_stamina_depleted() {
+    let mut deps = mock_dependencies(&[]);
+    let mut env = mock_env();
+    env.block.time = Timestamp::from_seconds(1595431050+1000000);
+    let instantiate_msg = InstantiateMsg {
+        owner: Addr::unchecked("owner0000"),
+        nft_contract_addr: Addr::unchecked("internnft0000"),
+        terrand_addr: Addr::unchecked("terrand0000"),
+        stamina_constant: 1,
+        exp_constant: 1
+    };
+
+    let info = mock_info("addr0000", &[]);
+
+    let _instantiate_res = instantiate(deps.as_mut(), mock_env(), info.clone(), instantiate_msg).unwrap();
+
+    let hook_msg = Cw721HookMsg::Stake { staking_type: "exp".to_string() };
+
+    let receive_msg = Cw721ReceiveMsg {
+        sender: info.sender.to_string(),
+        token_id: "0".to_string(),
+        msg: to_binary(&hook_msg).unwrap(),
+    };
+
+    let staking_res = stake(deps.as_mut(), env.clone(), info.sender.clone(), "exp".to_string(), receive_msg).unwrap();
+
+    let test_staking_res = Response::new()
+        .add_attribute("action", "stake")
+        .add_attribute("token_id", "0".to_string())
+        .add_attribute("staking_type", "exp".to_string());
+
+    assert_eq!(staking_res, test_staking_res);
+
+    let query_staking_res = query_staking_info(deps.as_ref(), "0".to_string()).unwrap();
+
+    let test_staking_res = to_binary(&StakingInfo {
+        staked: true,
+        last_action_block_time: env.block.height,
+        current_stamina: 100,
+        token_id: "0".to_string(),
+        owner: info.sender.clone(),
+        staking_type: "exp".to_string()
+    }).unwrap();
+
+    assert_eq!(query_staking_res, test_staking_res);
+
+    let staked_blocks = 102;
+    env.block.height += staked_blocks;
+
+    let unstake_res = withdraw_nft(deps.as_mut(), env.clone(), info.clone(), "0".to_string()).unwrap();
+
+    let added_exp = 100;
+
+    let msgs = vec![
+        CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: "internnft0000".to_string(),
+            msg: to_binary(&UpdateTrait {
+                token_id: "0".to_string(),
+                exp: added_exp,
+                gold: 0,
+                stamina: 100,
+            }).unwrap(),
+            funds: vec![],
+        }),
+        CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: "internnft0000".to_string(),
+            msg: to_binary(&Cw721ExecuteMsg::TransferNft {
+                recipient: "addr0000".to_string(),
+                token_id: "0".to_string(),
+            }).unwrap(),
+            funds: vec![]
+        })
+    ];
+
+    let unstake_test_res = Response::new()
+        .add_messages(msgs)
+        .add_attribute("action", "unstake")
+        .add_attribute("token_id", "0".to_string())
+        .add_attribute("staking_type", "exp".to_string())
+        .add_attribute("gold_added", 0.to_string())
+        .add_attribute("exp_added", added_exp.to_string())
+        .add_attribute("stamina_lost", 100.to_string())
+        .add_attribute("new_stamina", 0.to_string());
+
+    assert_eq!(unstake_res, unstake_test_res);
+
+    let _query_staking_res = query_staking_info(deps.as_ref(), "0".to_string()).unwrap();
+
+    let _test_staking_res = to_binary(&StakingInfo {
+        staked: false,
+        last_action_block_time: env.block.height,
+        current_stamina: 100,
+        token_id: "0".to_string(),
+        owner: info.sender,
+        staking_type: "exp".to_string()
+    }).unwrap();
 }

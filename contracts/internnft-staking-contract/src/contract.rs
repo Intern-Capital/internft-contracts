@@ -214,7 +214,16 @@ pub fn withdraw_nft(
     //1. calculate stamina lost
     //1a. stamina_lost = blocks_elapsed * decay_rate (assuming linear decay)
 
-    let stamina_lost = (env.block.height - staking_info.last_action_block_time) * config.stamina_constant;
+    let stamina_lost = match (env.block.height - staking_info.last_action_block_time) * config.stamina_constant > staking_info.current_stamina {
+        true => {staking_info.current_stamina}
+        false => {(env.block.height - staking_info.last_action_block_time) * config.stamina_constant}
+    };
+
+    //updating stamina, exp, gold at the end
+    new_staking_info.current_stamina = match staking_info.current_stamina < stamina_lost {
+        true => 0,
+        false => staking_info.current_stamina - stamina_lost,
+    };
 
     //2. calculate the block times for which the rewards will be generated
     //2a. reward_blocks = [input_reward_block, output_reward_block]
@@ -251,7 +260,7 @@ pub fn withdraw_nft(
 
         let mut reward_block = 0;
 
-        while reward_block < output_reward_block - input_reward_block {
+        while reward_block < output_reward_block-input_reward_block {
             let wasm = WasmQuery::Smart {
                 contract_addr: config.terrand_addr.to_string(),
                 msg: to_binary(&GetRandomness {
@@ -260,10 +269,10 @@ pub fn withdraw_nft(
             };
             let res: GetRandomResponse = deps.querier.query(&wasm.into())?;
             let slice = res.randomness.as_slice();
-            for i in 1..slice.len()-1 {
-                added_gold += (slice[i] % 4) as u64;
+            for number in slice.iter().take(slice.len()-1).skip(1)  {
+                added_gold += (*number % 4) as u64;
                 reward_block += 1;
-                if reward_block >= output_reward_block - input_reward_block {
+                if reward_block >= output_reward_block-input_reward_block {
                     break;
                 }
             }
@@ -271,11 +280,7 @@ pub fn withdraw_nft(
     } else {
         return Err(ContractError::InvalidStakingType {})
     }
-    //updating stamina, exp, gold at the end
-    new_staking_info.current_stamina = match staking_info.current_stamina < stamina_lost {
-        true => 0,
-        false => staking_info.current_stamina - stamina_lost,
-    };
+
     new_staking_info.staked = false;
     new_staking_info.last_action_block_time = env.block.height;
 

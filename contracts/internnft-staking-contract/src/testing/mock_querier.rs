@@ -61,7 +61,7 @@ impl WasmMockQuerier {
                 },
                 QueryMsg::InternNftInfo {token_id} => {
                     SystemResult::Ok(ContractResult::from(to_binary(&InternTokenInfo {
-                        owner: Addr::unchecked((String::from("addr000")+token_id.as_str()).to_string()),
+                        owner: Addr::unchecked(String::from("addr000")+token_id.as_str()),
                         approvals: vec![],
                         name: token_id.to_string(),
                         description: "test".to_string(),
