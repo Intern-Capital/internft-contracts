@@ -694,12 +694,12 @@ fn test_stake_unstake_gold_stamina_depleted() {
 
     assert_eq!(unstake_res, unstake_test_res);
 
-    let _query_staking_res = query_staking_info(deps.as_ref(), "0".to_string()).unwrap();
+    let query_staking_res = query_staking_info(deps.as_ref(), "0".to_string()).unwrap();
 
-    let _test_staking_res = to_binary(&StakingInfo {
+    let test_staking_res = to_binary(&StakingInfo {
         staked: false,
         last_action_block_time: env.block.height,
-        current_stamina: 100,
+        current_stamina: 0,
         token_id: "0".to_string(),
         owner: info.sender,
         staking_type: "gold".to_string(),
@@ -811,12 +811,12 @@ fn test_stake_unstake_exp_stamina_depleted() {
 
     assert_eq!(unstake_res, unstake_test_res);
 
-    let _query_staking_res = query_staking_info(deps.as_ref(), "0".to_string()).unwrap();
+    let query_staking_res = query_staking_info(deps.as_ref(), "0".to_string()).unwrap();
 
-    let _test_staking_res = to_binary(&StakingInfo {
+    let test_staking_res = to_binary(&StakingInfo {
         staked: false,
         last_action_block_time: env.block.height,
-        current_stamina: 100,
+        current_stamina: 0,
         token_id: "0".to_string(),
         owner: info.sender,
         staking_type: "exp".to_string(),
