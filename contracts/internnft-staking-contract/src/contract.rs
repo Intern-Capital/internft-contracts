@@ -170,7 +170,7 @@ pub fn stake(
             };
     }
 
-    STAKING_INFO.save(deps.storage, msg.token_id.clone(), &new_staking_info);
+    STAKING_INFO.save(deps.storage, msg.token_id.clone(), &new_staking_info)?;
     //once stamina is updated, finish
 
     Ok(Response::new()
@@ -198,6 +198,10 @@ pub fn withdraw_nft(
             })?,
         }))?;
 
+    if token_info.owner != info.sender {
+        return Err(ContractError::Unauthorized {});
+    }
+
     let staking_info: StakingInfo = match STAKING_INFO.has(deps.storage, token_id.clone()) {
         true => Ok(get_staking_info(&deps, token_id.clone()).unwrap()),
         false => Err(ContractError::NoStakedToken {}),
@@ -205,10 +209,6 @@ pub fn withdraw_nft(
 
     let mut new_staking_info: StakingInfo = staking_info.clone();
     let mut new_token_info: InternTokenInfo = token_info.clone();
-
-    if token_info.owner != info.sender {
-        return Err(ContractError::Unauthorized {});
-    }
 
     //update gold or experience
     //1. calculate stamina lost

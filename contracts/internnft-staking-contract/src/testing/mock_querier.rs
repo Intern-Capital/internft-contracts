@@ -59,11 +59,11 @@ impl WasmMockQuerier {
                             worker: "terra1x46rqay4d3cssq8gxxvqz8xt6nwlz4td20k38v".to_string()
                         })))
                 },
-                QueryMsg::InternNftInfo {token_id: _} => {
+                QueryMsg::InternNftInfo {token_id} => {
                     SystemResult::Ok(ContractResult::from(to_binary(&InternTokenInfo {
-                        owner: Addr::unchecked("addr0000".to_string()),
+                        owner: Addr::unchecked((String::from("addr000")+token_id.as_str()).to_string()),
                         approvals: vec![],
-                        name: "0".to_string(),
+                        name: token_id.to_string(),
                         description: "test".to_string(),
                         image: None,
                         extension: InternExtension {

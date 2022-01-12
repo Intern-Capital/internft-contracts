@@ -66,7 +66,11 @@ pub fn execute_update_traits(
     new_token.extension.stamina = stamina;
     tokens().replace(deps.storage, &token_id, Some(&new_token), Some(&token))?;
 
-    Ok(Response::new()) //TODO: fix this
+    Ok(Response::new()
+        .add_attribute("action", "update_traits")
+        .add_attribute("experience", exp.to_string())
+        .add_attribute("gold", gold.to_string())
+        .add_attribute("stamina", stamina.to_string()))
 }
 
 #[allow(dead_code)]

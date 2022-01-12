@@ -422,3 +422,87 @@ fn test_stake_unstake_exp_stamina_not_depleted() {
 
     assert_eq!(unstake_res, unstake_test_res)
 }
+
+#[test]
+fn test_unstake_without_stake() {
+    let mut deps = mock_dependencies(&[]);
+    let env = mock_env();
+    let instantiate_msg = InstantiateMsg {
+        owner: Addr::unchecked("owner0000"),
+        nft_contract_addr: Addr::unchecked("internnft0000"),
+        terrand_addr: Addr::unchecked("terrand0000"),
+        stamina_constant: 1,
+        exp_constant: 1
+    };
+
+    let info = mock_info("addr0000", &[]);
+
+    let _instantiate_res = instantiate(deps.as_mut(), mock_env(), info.clone(), instantiate_msg).unwrap();
+
+
+
+    let unstake_res = withdraw_nft(deps.as_mut(), env, info, "0".to_string());
+
+    match unstake_res {
+        Err(ContractError::NoStakedToken {}) => (),
+        _ => panic!("Must return no staked token error"),
+    }
+}
+
+#[test]
+fn test_unstake_unowned() {
+    let mut deps = mock_dependencies(&[]);
+    let mut env = mock_env();
+    env.block.time = Timestamp::from_seconds(1595431050+1000000);
+    let instantiate_msg = InstantiateMsg {
+        owner: Addr::unchecked("owner0000"),
+        nft_contract_addr: Addr::unchecked("internnft0000"),
+        terrand_addr: Addr::unchecked("terrand0000"),
+        stamina_constant: 1,
+        exp_constant: 1
+    };
+
+    let info = mock_info("addr0000", &[]);
+
+    let _instantiate_res = instantiate(deps.as_mut(), mock_env(), info.clone(), instantiate_msg).unwrap();
+
+    let hook_msg = Cw721HookMsg::Stake { staking_type: "gold".to_string() };
+
+    let receive_msg = Cw721ReceiveMsg {
+        sender: info.sender.to_string(),
+        token_id: "0".to_string(),
+        msg: to_binary(&hook_msg).unwrap(),
+    };
+
+    let staking_res = stake(deps.as_mut(), env.clone(), info.sender.clone(), "exp".to_string(), receive_msg).unwrap();
+
+    let test_staking_res = Response::new()
+        .add_attribute("action", "stake")
+        .add_attribute("token_id", "0".to_string())
+        .add_attribute("staking_type", "exp".to_string());
+
+    assert_eq!(staking_res, test_staking_res);
+
+    let query_staking_res = query_staking_info(deps.as_ref(), "0".to_string()).unwrap();
+
+    let test_staking_res = to_binary(&StakingInfo {
+        staked: true,
+        last_action_block_time: env.block.height,
+        current_stamina: 100,
+        token_id: "0".to_string(),
+        owner: info.sender.clone(),
+        staking_type: "exp".to_string()
+    }).unwrap();
+
+    assert_eq!(query_staking_res, test_staking_res);
+
+    let staked_blocks = 10;
+    env.block.height += staked_blocks;
+
+    let unstake_res = withdraw_nft(deps.as_mut(), env, info, "1".to_string());
+
+    match unstake_res {
+        Err(ContractError::Unauthorized {}) => (),
+        _ => panic!("Must return no staked token error"),
+    }
+}
