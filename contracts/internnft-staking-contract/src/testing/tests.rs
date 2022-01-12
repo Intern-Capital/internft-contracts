@@ -702,9 +702,12 @@ fn test_stake_unstake_gold_stamina_depleted() {
         current_stamina: 100,
         token_id: "0".to_string(),
         owner: info.sender,
-        staking_type: "exp".to_string(),
+        staking_type: "gold".to_string(),
     })
     .unwrap();
+
+    assert_eq!(query_staking_res, test_staking_res);
+
 }
 
 #[test]
@@ -819,4 +822,6 @@ fn test_stake_unstake_exp_stamina_depleted() {
         staking_type: "exp".to_string(),
     })
     .unwrap();
+    assert_eq!(query_staking_res, test_staking_res);
+
 }
