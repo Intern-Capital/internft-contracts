@@ -18,7 +18,7 @@ fn mock_config() -> Config {
         mint_fee: Coin::new(0, "uluna"),
         token_supply: 10000,
         wallet_limit: 5,
-        staking_contract: "staking_contract".to_string()
+        staking_contract: "staking_contract".to_string(),
     }
 }
 

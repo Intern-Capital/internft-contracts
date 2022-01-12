@@ -61,7 +61,7 @@ pub enum Cw721HookMsg {
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
     GetConfig {},
-    GetStakingInfo {token_id: String},
+    GetStakingInfo { token_id: String },
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]

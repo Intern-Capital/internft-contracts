@@ -6,7 +6,7 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw721::{Cw721ExecuteMsg, Cw721ReceiveMsg};
-use internnft::nft::ExecuteMsg::{UpdateTrait};
+use internnft::nft::ExecuteMsg::UpdateTrait;
 use internnft::nft::InternTokenInfo;
 use internnft::nft::QueryMsg::InternNftInfo;
 use internnft::staking::ContractQuery::GetRandomness;
@@ -28,8 +28,7 @@ pub fn instantiate(
     _info: MessageInfo,
     msg: InstantiateMsg,
 ) -> Result<Response, ContractError> {
-
-    let config: Config = Config{
+    let config: Config = Config {
         nft_contract_addr: msg.nft_contract_addr.clone(),
         terrand_addr: msg.terrand_addr.clone(),
         owner: msg.owner.clone(),
@@ -58,7 +57,21 @@ pub fn execute(
 ) -> Result<Response, ContractError> {
     match msg {
         ExecuteMsg::Receive(msg) => receive_cw721(deps, env, info, msg),
-        ExecuteMsg::UpdateConfig {nft_contract_addr, terrand_addr, owner, stamina_constant, exp_constant} => update_config(deps, info, nft_contract_addr, terrand_addr, owner, stamina_constant, exp_constant),
+        ExecuteMsg::UpdateConfig {
+            nft_contract_addr,
+            terrand_addr,
+            owner,
+            stamina_constant,
+            exp_constant,
+        } => update_config(
+            deps,
+            info,
+            nft_contract_addr,
+            terrand_addr,
+            owner,
+            stamina_constant,
+            exp_constant,
+        ),
         ExecuteMsg::WithdrawNft { token_id } => withdraw_nft(deps, env, info, token_id),
     }
 }
@@ -92,7 +105,7 @@ pub fn update_config(
         return Err(ContractError::Unauthorized {});
     }
 
-    let new_config: Config = Config{
+    let new_config: Config = Config {
         nft_contract_addr,
         terrand_addr,
         owner,
@@ -214,9 +227,12 @@ pub fn withdraw_nft(
     //1. calculate stamina lost
     //1a. stamina_lost = blocks_elapsed * decay_rate (assuming linear decay)
 
-    let stamina_lost = match (env.block.height - staking_info.last_action_block_time) * config.stamina_constant > staking_info.current_stamina {
-        true => {staking_info.current_stamina}
-        false => {(env.block.height - staking_info.last_action_block_time) * config.stamina_constant}
+    let stamina_lost = match (env.block.height - staking_info.last_action_block_time)
+        * config.stamina_constant
+        > staking_info.current_stamina
+    {
+        true => staking_info.current_stamina,
+        false => (env.block.height - staking_info.last_action_block_time) * config.stamina_constant,
     };
 
     //updating stamina, exp, gold at the end
@@ -260,7 +276,7 @@ pub fn withdraw_nft(
 
         let mut reward_block = 0;
 
-        while reward_block < output_reward_block-input_reward_block {
+        while reward_block < output_reward_block - input_reward_block {
             let wasm = WasmQuery::Smart {
                 contract_addr: config.terrand_addr.to_string(),
                 msg: to_binary(&GetRandomness {
@@ -269,16 +285,16 @@ pub fn withdraw_nft(
             };
             let res: GetRandomResponse = deps.querier.query(&wasm.into())?;
             let slice = res.randomness.as_slice();
-            for number in slice.iter().take(slice.len()-1).skip(1)  {
+            for number in slice.iter().take(slice.len() - 1).skip(1) {
                 added_gold += (*number % 4) as u64;
                 reward_block += 1;
-                if reward_block >= output_reward_block-input_reward_block {
+                if reward_block >= output_reward_block - input_reward_block {
                     break;
                 }
             }
         }
     } else {
-        return Err(ContractError::InvalidStakingType {})
+        return Err(ContractError::InvalidStakingType {});
     }
 
     new_staking_info.staked = false;
@@ -307,7 +323,7 @@ pub fn withdraw_nft(
             recipient: String::from(staking_info.owner),
             token_id: token_id.clone(),
         })?,
-        funds: vec![]
+        funds: vec![],
     });
 
     let msgs = vec![update_message, transfer_message];
@@ -327,7 +343,7 @@ pub fn withdraw_nft(
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::GetConfig {} => query_config(deps),
-        QueryMsg::GetStakingInfo {token_id} => query_staking_info(deps, token_id),
+        QueryMsg::GetStakingInfo { token_id } => query_staking_info(deps, token_id),
     }
 }
 

@@ -1,18 +1,21 @@
-use cosmwasm_std::{Addr, Coin, ContractResult, from_binary, from_slice, OwnedDeps, Querier, QuerierResult, QueryRequest, SystemError, SystemResult, to_binary, WasmQuery};
+use cosmwasm_std::{
+    from_binary, from_slice, to_binary, Addr, Coin, ContractResult, OwnedDeps, Querier,
+    QuerierResult, QueryRequest, SystemError, SystemResult, WasmQuery,
+};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::testing::{MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR};
 use internnft::staking::GetRandomResponse;
 
-use terra_cosmwasm::{TerraQueryWrapper};
 use internnft::nft::{InternExtension, InternTokenInfo};
+use terra_cosmwasm::TerraQueryWrapper;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
     GetRandomness { round: u64 },
-    InternNftInfo {token_id: String},
+    InternNftInfo { token_id: String },
 }
 
 pub fn mock_dependencies(
@@ -42,7 +45,7 @@ impl Querier for WasmMockQuerier {
                 })
             }
         };
-    self.handle_query(&request)
+        self.handle_query(&request)
     }
 }
 
@@ -52,16 +55,17 @@ impl WasmMockQuerier {
             QueryRequest::Wasm(WasmQuery::Smart {
                 contract_addr: _,
                 msg,
-           }) => match from_binary(msg).unwrap() {
+            }) => match from_binary(msg).unwrap() {
                 QueryMsg::GetRandomness { round: _ } => {
-                        SystemResult::Ok(ContractResult::from(to_binary(&GetRandomResponse {
-                            randomness: to_binary("yTBW2ubloeFa+ZRh08Jt+4jVQHHGMX4s3j8mTYKc3oQ=").unwrap(),
-                            worker: "terra1x46rqay4d3cssq8gxxvqz8xt6nwlz4td20k38v".to_string()
-                        })))
-                },
-                QueryMsg::InternNftInfo {token_id} => {
+                    SystemResult::Ok(ContractResult::from(to_binary(&GetRandomResponse {
+                        randomness: to_binary("yTBW2ubloeFa+ZRh08Jt+4jVQHHGMX4s3j8mTYKc3oQ=")
+                            .unwrap(),
+                        worker: "terra1x46rqay4d3cssq8gxxvqz8xt6nwlz4td20k38v".to_string(),
+                    })))
+                }
+                QueryMsg::InternNftInfo { token_id } => {
                     SystemResult::Ok(ContractResult::from(to_binary(&InternTokenInfo {
-                        owner: Addr::unchecked(String::from("addr000")+token_id.as_str()),
+                        owner: Addr::unchecked(String::from("addr000") + token_id.as_str()),
                         approvals: vec![],
                         name: token_id.to_string(),
                         description: "test".to_string(),
@@ -69,8 +73,8 @@ impl WasmMockQuerier {
                         extension: InternExtension {
                             experience: 0,
                             gold: 0,
-                            stamina: 100
-                        }
+                            stamina: 100,
+                        },
                     })))
                 }
             },
@@ -81,8 +85,6 @@ impl WasmMockQuerier {
 
 impl WasmMockQuerier {
     pub fn new(base: MockQuerier<TerraQueryWrapper>) -> Self {
-        WasmMockQuerier {
-            base,
-        }
+        WasmMockQuerier { base }
     }
 }
