@@ -48,7 +48,7 @@ pub enum ExecuteMsg {
         exp_constant: u64,
     },
     /// Allows the calling user to withdraw the specified nft if they own it.
-    WithdrawNft { nft_id: String },
+    WithdrawNft { token_id: String },
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]

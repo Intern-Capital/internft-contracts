@@ -29,7 +29,6 @@ pub fn mock_dependencies(
 
 pub struct WasmMockQuerier {
     base: MockQuerier<TerraQueryWrapper>,
-    terrand_response: GetRandomResponse,
 }
 
 impl Querier for WasmMockQuerier {
@@ -60,7 +59,7 @@ impl WasmMockQuerier {
                             worker: "terra1x46rqay4d3cssq8gxxvqz8xt6nwlz4td20k38v".to_string()
                         })))
                 },
-                QueryMsg::InternNftInfo {token_id} => {
+                QueryMsg::InternNftInfo {token_id: _} => {
                     SystemResult::Ok(ContractResult::from(to_binary(&InternTokenInfo {
                         owner: Addr::unchecked("addr0000".to_string()),
                         approvals: vec![],
@@ -84,7 +83,6 @@ impl WasmMockQuerier {
     pub fn new(base: MockQuerier<TerraQueryWrapper>) -> Self {
         WasmMockQuerier {
             base,
-            terrand_response: GetRandomResponse::default()
         }
     }
 }

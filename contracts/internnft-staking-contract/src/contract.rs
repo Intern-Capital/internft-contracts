@@ -6,7 +6,7 @@ use cosmwasm_std::{
 };
 use cw2::set_contract_version;
 use cw721::{Cw721ExecuteMsg, Cw721ReceiveMsg};
-use internnft::nft::ExecuteMsg::{TransferNft, UpdateTrait};
+use internnft::nft::ExecuteMsg::{UpdateTrait};
 use internnft::nft::InternTokenInfo;
 use internnft::nft::QueryMsg::InternNftInfo;
 use internnft::staking::ContractQuery::GetRandomness;
@@ -59,7 +59,7 @@ pub fn execute(
     match msg {
         ExecuteMsg::Receive(msg) => receive_cw721(deps, env, info, msg),
         ExecuteMsg::UpdateConfig {nft_contract_addr, terrand_addr, owner, stamina_constant, exp_constant} => update_config(deps, info, nft_contract_addr, terrand_addr, owner, stamina_constant, exp_constant),
-        ExecuteMsg::WithdrawNft { nft_id } => withdraw_nft(deps, env, info, nft_id),
+        ExecuteMsg::WithdrawNft { token_id } => withdraw_nft(deps, env, info, token_id),
     }
 }
 
@@ -133,6 +133,10 @@ pub fn stake(
             })?,
         }))?;
 
+    if token_info.owner != sender {
+        return Err(ContractError::Unauthorized {});
+    }
+
     let staking_info: StakingInfo = match STAKING_INFO.has(deps.storage, msg.token_id.clone()) {
         true => get_staking_info(&deps, msg.token_id.clone()).unwrap(),
         false => StakingInfo {
@@ -146,7 +150,7 @@ pub fn stake(
     };
 
     if staking_info.staked {
-        Err(ContractError::TokenAlreadyStaked {})
+        return Err(ContractError::TokenAlreadyStaked {});
     }
 
     let mut new_staking_info = staking_info.clone();
@@ -166,10 +170,7 @@ pub fn stake(
             };
     }
 
-    if STAKING_INFO.has(deps.storage, msg.token_id.clone()) {}
-
-    STAKING_INFO.update(deps.storage, msg.token_id.clone(), new_staking_info);
-
+    STAKING_INFO.save(deps.storage, msg.token_id.clone(), &new_staking_info);
     //once stamina is updated, finish
 
     Ok(Response::new()
@@ -206,15 +207,14 @@ pub fn withdraw_nft(
     let mut new_token_info: InternTokenInfo = token_info.clone();
 
     if token_info.owner != info.sender {
-        Err(ContractError::Unauthorized {})
+        return Err(ContractError::Unauthorized {});
     }
 
     //update gold or experience
     //1. calculate stamina lost
     //1a. stamina_lost = blocks_elapsed * decay_rate (assuming linear decay)
 
-    let stamina_lost = staking_info.current_stamina
-        - (env.block.height - staking_info.last_action_block_time) * config.stamina_constant;
+    let stamina_lost = (env.block.height - staking_info.last_action_block_time) * config.stamina_constant;
 
     //2. calculate the block times for which the rewards will be generated
     //2a. reward_blocks = [input_reward_block, output_reward_block]
@@ -259,8 +259,9 @@ pub fn withdraw_nft(
                 })?,
             };
             let res: GetRandomResponse = deps.querier.query(&wasm.into())?;
-            for slice in res.randomness.as_slice() {
-                added_gold += (*slice % 4) as u64;
+            let slice = res.randomness.as_slice();
+            for i in 1..slice.len()-1 {
+                added_gold += (slice[i] % 4) as u64;
                 reward_block += 1;
                 if reward_block >= output_reward_block - input_reward_block {
                     break;
@@ -311,9 +312,10 @@ pub fn withdraw_nft(
         .add_attribute("action", "unstake")
         .add_attribute("token_id", token_id)
         .add_attribute("staking_type", staking_info.staking_type)
-        .add_attribute("gold_added", added_gold)
-        .add_attribute("exp_added", added_exp)
-        .add_attribute("stamina_lost", stamina_lost))
+        .add_attribute("gold_added", added_gold.to_string())
+        .add_attribute("exp_added", added_exp.to_string())
+        .add_attribute("stamina_lost", stamina_lost.to_string())
+        .add_attribute("new_stamina", new_staking_info.current_stamina.to_string()))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -326,10 +328,10 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 
 pub fn query_config(deps: Deps) -> StdResult<Binary> {
     let config = CONFIG.load(deps.storage)?;
-    Ok(to_binary(&config)?)
+    to_binary(&config)
 }
 
 pub fn query_staking_info(deps: Deps, token_id: String) -> StdResult<Binary> {
     let staking_info = STAKING_INFO.load(deps.storage, token_id)?;
-    Ok(to_binary(&staking_info)?)
+    to_binary(&staking_info)
 }
