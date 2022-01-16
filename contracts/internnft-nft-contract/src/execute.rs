@@ -42,6 +42,37 @@ pub fn execute_mint(
         .add_attribute("minter", info.sender))
 }
 
+pub fn execute_update_traits(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    token_id: String,
+    exp: u64,
+    gold: u64,
+    stamina: u64,
+) -> Result<Response, ContractError> {
+    let config = CONFIG.load(deps.storage)?;
+    let staking_contract = config.staking_contract;
+    let token = tokens().load(deps.storage, &token_id)?;
+
+    //right now, only the staking contract can update the traits
+    if info.sender != staking_contract {
+        return Err(ContractError::Unauthorized {});
+    }
+
+    let mut new_token = token.clone();
+    new_token.extension.experience = exp;
+    new_token.extension.gold = gold;
+    new_token.extension.stamina = stamina;
+    tokens().replace(deps.storage, &token_id, Some(&new_token), Some(&token))?;
+
+    Ok(Response::new()
+        .add_attribute("action", "update_traits")
+        .add_attribute("experience", exp.to_string())
+        .add_attribute("gold", gold.to_string())
+        .add_attribute("stamina", stamina.to_string()))
+}
+
 #[allow(dead_code)]
 fn check_sufficient_funds(funds: Vec<Coin>, required: Coin) -> Result<(), ContractError> {
     if required.amount.u128() == 0 {
@@ -216,7 +247,7 @@ mod test {
     use super::*;
 
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::{to_binary, Addr, Uint128};
+    use cosmwasm_std::{to_binary, Addr};
     use cw721::{Cw721ReceiveMsg, Expiration};
     use cw721_base::state::Approval;
     use internnft::nft::InternTokenInfo;
@@ -233,8 +264,8 @@ mod test {
                 description: "".to_string(),
                 image: None,
                 extension: InternExtension {
-                    experience: Uint128::new(10),
-                    gold: Uint128::new(100),
+                    experience: 10,
+                    gold: 100,
                     stamina: 0,
                 },
             },
@@ -245,8 +276,8 @@ mod test {
                 description: "".to_string(),
                 image: None,
                 extension: InternExtension {
-                    experience: Uint128::new(20),
-                    gold: Uint128::new(200),
+                    experience: 20,
+                    gold: 200,
                     stamina: 0,
                 },
             },

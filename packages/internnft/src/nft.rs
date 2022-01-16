@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{Addr, Binary, Coin, StdError, StdResult, Uint128};
+use cosmwasm_std::{Addr, Binary, Coin, StdError, StdResult};
 use cw721::{Expiration, OwnerOfResponse};
 use cw721_base::msg::{ExecuteMsg as CW721ExecuteMsg, QueryMsg as CW721QueryMsg};
 use cw721_base::state::Approval;
@@ -59,13 +59,15 @@ pub struct Config {
     pub wallet_limit: u32,
     /// The price to mint a new xyz (doesn't apply to the contract owner)
     pub mint_fee: Coin,
+    //the staking contract that can make changes to gold and exp
+    pub staking_contract: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, Copy)]
 pub struct InternExtension {
-    pub experience: Uint128,
-    pub gold: Uint128,
-    pub stamina: u8,
+    pub experience: u64,
+    pub gold: u64,
+    pub stamina: u64,
 }
 
 impl InternExtension {
@@ -157,7 +159,12 @@ pub enum ExecuteMsg {
     Withdraw {
         amount: Vec<Coin>,
     },
-
+    UpdateTrait {
+        token_id: String,
+        exp: u64,
+        gold: u64,
+        stamina: u64,
+    },
     /// BELOW ARE COPIED FROM CW721-BASE
     TransferNft {
         recipient: String,
@@ -363,16 +370,16 @@ mod tests {
     use super::*;
 
     #[test]
-    fn xyz_token_info_as_cw721_nft_info() {
+    fn intern_token_info_as_cw721_nft_info() {
         let info = InternTokenInfo {
-            name: "xyz #1".to_string(),
-            owner: Addr::unchecked("test owner"),
-            description: "test description".to_string(),
+            name: "intern #1".to_string(),
+            owner: Addr::unchecked("testing owner"),
+            description: "testing description".to_string(),
             image: None,
             approvals: vec![],
             extension: InternExtension {
-                experience: Uint128::new(10),
-                gold: Uint128::new(100),
+                experience: 10,
+                gold: 100,
                 stamina: 100,
             },
         };
@@ -382,8 +389,8 @@ mod tests {
             Cw721NftInfoResponse {
                 token_uri: None,
                 extension: Cw721Metadata {
-                    name: Some("xyz #1".to_string()),
-                    description: Some("test description".to_string()),
+                    name: Some("intern #1".to_string()),
+                    description: Some("testing description".to_string()),
                     image: None,
                     attributes: Some(vec![
                         Cw721Trait {

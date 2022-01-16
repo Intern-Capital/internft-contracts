@@ -40,7 +40,7 @@ making any changes. Go into the repository and do:
 cargo wasm
 
 # this runs unit tests with helpful backtraces
-RUST_BACKTRACE=1 cargo unit-test
+RUST_BACKTRACE=1 cargo unit-testing
 
 # auto-generate json schema
 cargo schema
