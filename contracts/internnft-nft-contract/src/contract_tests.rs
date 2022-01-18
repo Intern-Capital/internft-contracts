@@ -1,4 +1,7 @@
 #![cfg(test)]
+use crate::state::tokens;
+use cosmwasm_std::coin;
+use crate::execute::execute_mint;
 use std::str;
 
 use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
@@ -12,6 +15,9 @@ use crate::query as QueryHandler;
 
 const OWNER: &str = "owner";
 const NONOWNER: &str = "nonowner";
+const MINTER: &str = "minter";
+const CONTRACT: &str = "cosmos2contract";
+const ADDR1: &str = "terra100000000000000000000000000000000ctamsz";
 
 fn mock_config() -> Config {
     Config {
@@ -22,7 +28,7 @@ fn mock_config() -> Config {
     }
 }
 
-fn setup_contract(
+pub fn setup_contract(
     deps: DepsMut,
     mint_fee: Option<Coin>,
     token_supply: Option<u64>,
@@ -97,6 +103,26 @@ fn update_and_query_config() {
     // check config was updated
     let res = QueryHandler::query_config(deps.as_ref()).unwrap();
     assert_eq!(res, new_config);
+
+        // mint with enough funds
+    let res = execute_mint(
+        deps.as_mut(),
+        mock_env(),
+        mock_info(CONTRACT, &[coin(10000,"uluna")]),
+        ADDR1.to_string()
+    )
+    .unwrap();
+
+    // ensure response event emits the minted token_id
+    assert!(res
+        .attributes
+        .iter()
+        .any(|attr| attr.key == "token_id" && attr.value == "0"));
+
+    // check ownership was updated
+    let token = tokens().load(&deps.storage, "0").unwrap();
+    assert_eq!(token.name, "Intern #0");
+    assert_eq!(token.owner.to_string(), ADDR1.to_string());
 }
 
 #[test]

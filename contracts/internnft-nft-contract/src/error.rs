@@ -17,6 +17,9 @@ pub enum ContractError {
     #[error("Cannot set approval that is already expired")]
     Expired {},
 
+    #[error("Intern token supply has been exhausted")]
+    SupplyExhausted {},
+
     #[error("Per-wallet token allotment exceeded")]
     WalletLimit {},
 
@@ -25,6 +28,9 @@ pub enum ContractError {
 
     #[error("Move already in progress")]
     MoveInProgress {},
+
+    #[error("Include enough funds")]
+    InsufficientFunds {},
 }
 
 impl From<CW721ContractError> for ContractError {

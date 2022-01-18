@@ -14,13 +14,12 @@ const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 #[entry_point]
 pub fn instantiate(
     deps: DepsMut,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     msg: InstantiateMsg,
 ) -> StdResult<Response> {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
-
-    ExecHandler::instantiate(deps, info, msg)
+    ExecHandler::instantiate(deps, env, info, msg)
 }
 
 #[entry_point]
@@ -31,7 +30,7 @@ pub fn execute(
     msg: ExecuteMsg,
 ) -> Result<Response, ContractError> {
     match msg {
-        ExecuteMsg::Mint {} => ExecHandler::execute_mint(deps, env, info),
+        ExecuteMsg::ExecuteMint { owner } => ExecHandler::execute_mint(deps, env, info, owner),
         ExecuteMsg::UpdateConfig { config } => {
             ExecHandler::execute_update_config(deps, info, config)
         }
