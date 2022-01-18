@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{Addr, Binary, Coin, StdError, StdResult};
 use cw721::{Expiration, OwnerOfResponse};
-use cw721_base::msg::{ExecuteMsg as CW721ExecuteMsg, QueryMsg as CW721QueryMsg};
+use cw721_base::msg::{ExecuteMsg as CW721ExecuteMsg, QueryMsg as CW721QueryMsg, MintMsg};
 use cw721_base::state::Approval;
 
 // ----------------- begin CW721 ^0.9.2 shim ----------------- //
@@ -109,7 +109,7 @@ impl InternTokenInfo {
             extension: Cw721Metadata {
                 name: Some(self.name.clone()),
                 // TODO: Put something for image.
-                image: None,
+                image: self.image.clone(),
                 description: Some(self.description.clone()),
                 attributes: Some(self.extension.as_traits()),
                 image_data: None,
@@ -150,7 +150,9 @@ pub struct InstantiateMsg {
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
-    Mint {},
+    Mint(MintMsg<InternExtension>),
+    /// External minter to call mint function
+    ExecuteMint { owner: String },
     /// Update token minting and supply configuration.
     UpdateConfig {
         config: Config,
@@ -196,6 +198,7 @@ pub enum ExecuteMsg {
 impl From<ExecuteMsg> for CW721ExecuteMsg<InternExtension> {
     fn from(msg: ExecuteMsg) -> CW721ExecuteMsg<InternExtension> {
         match msg {
+            ExecuteMsg::Mint(msg) => CW721ExecuteMsg::Mint(msg),
             ExecuteMsg::TransferNft {
                 recipient,
                 token_id,

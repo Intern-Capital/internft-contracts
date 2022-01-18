@@ -1,9 +1,11 @@
+use cosmwasm_std::SubMsg;
+use cosmwasm_std::to_binary;
 use cosmwasm_std::{
     Attribute, BankMsg, Binary, Coin, DepsMut, Empty, Env, MessageInfo, Order, Response, StdError,
-    StdResult, Storage,
+    StdResult, Storage, Uint128, WasmMsg, CosmosMsg
 };
 use cw721::{ContractInfoResponse, Cw721ReceiveMsg};
-use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, Cw721Contract};
+use cw721_base::{msg::ExecuteMsg as Cw721ExecuteMsg, Cw721Contract, MintMsg};
 use internnft::nft::{
     full_token_id, numeric_token_id, Config, ExecuteMsg, InstantiateMsg, InternExtension,
     MigrateMsg,
@@ -14,7 +16,7 @@ use crate::state::{tokens, CONFIG, OWNER};
 
 const INTERN: &str = "intern";
 
-pub fn instantiate(deps: DepsMut, info: MessageInfo, msg: InstantiateMsg) -> StdResult<Response> {
+pub fn instantiate(deps: DepsMut, env: Env, info: MessageInfo, msg: InstantiateMsg) -> StdResult<Response> {
     let cw721_contract = Cw721Contract::<InternExtension, Empty>::default();
 
     let contract_info = ContractInfoResponse {
@@ -24,7 +26,11 @@ pub fn instantiate(deps: DepsMut, info: MessageInfo, msg: InstantiateMsg) -> Std
     cw721_contract
         .contract_info
         .save(deps.storage, &contract_info)?;
-
+    // let minter = deps.api.addr_validate("terra1qzw84hfrha4hjr4q4xsntqduk8lkjmdz2r5deg")?;
+    cw721_contract
+        .minter
+        .save(deps.storage, &env.contract.address)?;
+        // .save(deps.storage, &minter)?;
     CONFIG.save(deps.storage, &msg.config)?;
     OWNER.save(deps.storage, &info.sender.to_string())?;
 
@@ -32,14 +38,69 @@ pub fn instantiate(deps: DepsMut, info: MessageInfo, msg: InstantiateMsg) -> Std
 }
 
 pub fn execute_mint(
-    _deps: DepsMut,
-    _env: Env,
+    deps: DepsMut,
+    env: Env,
     info: MessageInfo,
+    owner: String,
 ) -> Result<Response, ContractError> {
-    //TODO: Write minting contract.
+    let owner = deps.api.addr_validate(&owner)?;
+    // check funds
+    let config = CONFIG.load(deps.storage)?;
+    check_sufficient_funds(info.funds.clone(), config.mint_fee)?;
+    check_wallet_limit(deps.storage, owner.clone())?;
+    check_token_supply(deps.storage)?;
+
+    // get token count which will be new token id
+    let token_id = tokens()
+        .range(deps.storage, None, None, Order::Ascending)
+        .count();
+
+    // create mint message for cw721 default mint function
+    let mint_msg = MintMsg::<InternExtension> {
+        name: format!("{}{}", "Intern #", token_id),
+        description: get_description(),
+        owner: owner.clone().to_string(),
+        token_id: token_id.to_string(),
+        image: get_image(token_id.to_string()),
+        extension: InternExtension {
+            experience: 0u64,
+            gold: 0u64,
+            stamina: 0u64,
+        },
+    };
+    // let cw721_contract = Cw721Contract::<InternExtension, Empty>::default();
+
+    // cw721_contract.mint(deps, env, info, mint_msg)?;
+    // cw721_contract.execute(deps, env, info, cw721_base::ExecuteMsg::Mint(mint_msg))?;
+    let data = cw721_base::ExecuteMsg::Mint(mint_msg);
+    let msg =
+        WasmMsg::Execute {
+            contract_addr: env.contract.address.to_string(),
+            msg: to_binary(&data)?,
+            funds: Vec::new(),
+        };
+    // let data = Cw721ExecuteMsg::Mint(mint_msg);
+    // let msg =
+    //     WasmMsg::Execute {
+    //         contract_addr: env.contract.address.to_string(),
+    //         msg: to_binary(&data)?,
+    //         funds: Vec::new(),
+    //     };
+
     Ok(Response::new()
+        .add_message(msg)
         .add_attribute("action", "mint")
-        .add_attribute("minter", info.sender))
+        .add_attribute("owner", owner.to_string())
+        .add_attribute("token_id", token_id.to_string())
+    )
+}
+
+fn get_description() -> Option<String> {
+    return Some("Surviving of ramen and weed, nothing drives interns more than the passion for fashion".to_string());
+}
+
+fn get_image(token_id: String) -> Option<String> {
+    return Some(format!("{}{}", "ipfs://QmeSjSinHpPnmXmspMjwiXyN6zS4E9zccariGR3jxcaWtq/", token_id));
 }
 
 pub fn execute_update_traits(
@@ -96,8 +157,8 @@ fn check_sufficient_funds(funds: Vec<Coin>, required: Coin) -> Result<(), Contra
 fn check_wallet_limit(
     storage: &dyn Storage,
     owner: cosmwasm_std::Addr,
-    limit: u32,
 ) -> Result<(), ContractError> {
+    let config = CONFIG.load(storage)?;
     let num_wallet_tokens = tokens()
         .idx
         .owner
@@ -105,8 +166,24 @@ fn check_wallet_limit(
         .range(storage, None, None, Order::Ascending)
         .count();
 
-    if num_wallet_tokens >= limit as usize {
+    if num_wallet_tokens >= config.wallet_limit as usize {
         Err(ContractError::WalletLimit {})
+    } else {
+        Ok(())
+    }
+}
+
+#[allow(dead_code)]
+fn check_token_supply(
+    storage: &dyn Storage,
+) -> Result<(), ContractError> {
+    let config = CONFIG.load(storage)?;
+    let token_count = tokens()
+        .range(storage, None, None, Order::Ascending)
+        .count();
+
+    if token_count >= config.token_supply as usize {
+        Err(ContractError::SupplyExhausted {})
     } else {
         Ok(())
     }
@@ -180,6 +257,7 @@ pub fn cw721_base_execute(
             msg,
             token_id: full_token_id(token_id)?,
         },
+        Cw721ExecuteMsg::Mint(msg) => Cw721ExecuteMsg::Mint(msg),
         _ => cw721_msg,
     };
 
@@ -244,7 +322,9 @@ pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Respons
 
 #[cfg(test)]
 mod test {
-    use super::*;
+    use crate::contract_tests::setup_contract;
+use cosmwasm_std::coin;
+use super::*;
 
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
     use cosmwasm_std::{to_binary, Addr};
@@ -252,8 +332,10 @@ mod test {
     use cw721_base::state::Approval;
     use internnft::nft::InternTokenInfo;
 
-    const ADDR1: &str = "addr1";
-    const ADDR2: &str = "addr2";
+    const CONTRACT: &str = "cosmos2contract";
+    const ADDR1: &str = "terra100000000000000000000000000000000ctamsz";
+    const ADDR2: &str = "terra1vwyra0qafx8qf5x84530tef44z9wjvzytdgzxy";
+    const ADDR3: &str = "terra11rlllllllllllllllllllllllllllllllflc3ma";
 
     fn token_examples() -> Vec<InternTokenInfo> {
         vec![
@@ -284,6 +366,7 @@ mod test {
         ]
     }
 
+
     fn setup_storage(deps: DepsMut) {
         for token in token_examples().iter() {
             tokens().save(deps.storage, &token.name, token).unwrap();
@@ -292,6 +375,14 @@ mod test {
 
     fn numeric_id_error() -> ContractError {
         ContractError::Std(StdError::generic_err("expected numeric token identifier"))
+    }
+
+    fn insufficient_funds_error() -> ContractError {
+        ContractError::Std(StdError::generic_err("insufficient funds sent"))
+    }
+
+    fn wallet_limit_error() -> ContractError {
+        ContractError::WalletLimit {}
     }
 
     #[test]
@@ -473,5 +564,67 @@ mod test {
                 .add_attribute("recipient", "another_contract")
                 .add_attribute("token_id", token_id)
         );
+    }
+
+    #[test]
+    fn cw721_mint() {
+        let mut deps = mock_dependencies(&[]);
+
+        setup_contract(deps.as_mut(),
+            Some(coin(100,"uluna")),
+            Some(10u64),
+            Some(2u32),
+        );
+        setup_storage(deps.as_mut());
+
+        // mint without funds
+        let err = execute_mint(
+            deps.as_mut(),
+            mock_env(),
+            mock_info(CONTRACT, &[]),
+            ADDR3.to_string()
+        )
+        .unwrap_err();
+        assert_eq!(err, insufficient_funds_error());
+
+        // mint with enough funds
+        let res = execute_mint(
+            deps.as_mut(),
+            mock_env(),
+            mock_info(CONTRACT, &[coin(100,"uluna")]),
+            ADDR3.to_string()
+        )
+        .unwrap();
+
+        println!("{:?}",res);
+        // ensure response event emits the minted token_id
+        assert!(res
+            .attributes
+            .iter()
+            .any(|attr| attr.key == "token_id" && attr.value == "2"));
+
+        // check ownership was updated
+        let token = tokens().load(&deps.storage, "2").unwrap();
+        assert_eq!(token.name, "Intern #2");
+        assert_eq!(token.owner.to_string(), ADDR3.to_string());
+
+
+        // mint 2nd time
+        execute_mint(
+            deps.as_mut(),
+            mock_env(),
+            mock_info(CONTRACT, &[coin(100,"uluna")]),
+            ADDR3.to_string()
+        ).unwrap();
+
+        // mint past limit time
+        let err = execute_mint(
+            deps.as_mut(),
+            mock_env(),
+            mock_info(CONTRACT, &[coin(100,"uluna")]),
+            ADDR3.to_string()
+        )
+        .unwrap_err();
+        assert_eq!(err, wallet_limit_error());
     }
 }
